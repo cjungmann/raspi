@@ -92,14 +92,14 @@ sufficient to get the address.
 - **ifconfig**: Attach a monitor and USB keyboard and login to the
   device.  Then use the command **ifconfig** to view the network
   device addresses.
-- **dhcpd.leases file**  If you have access to the DHCP server from
+- **dhcpd.leases** file:  If you have access to the DHCP server from
   which the IP addresses are assigned, you can peruse the
   **dhcpd.leases** file, usually found in the */var/lib/dhcp*
   directory.
-- **nmap** Install and use the **nmap** command to scan the computers
-  on your network.  Invoke the command with a network mask, then look
-  at the output, eliminating familiar IP addresses to limit your
-  consideration to new or unknown IP addresses.
+- **nmap** command: Install and use the **nmap** command to scan the
+  computers on your network.  Invoke the command with a network mask,
+  then look at the output, eliminating familiar IP addresses to limit
+  your consideration to new or unknown IP addresses.
 
   ~~~.sh
   $ nmap -sn 192.168.0.0/24
@@ -139,7 +139,8 @@ for better security.
   - Open interface option **P2 SSH**.
   - Turn on SSH access.
 
-- Change password from default.  Don't leave the default password on your device!
+- Change password from default.  Don't leave the default password on
+  your device!
   - Open the **raspi-config** tool.
   - Open option **1 Change User Password**.
   - Set the new password.
@@ -152,8 +153,8 @@ and I had to refer to the Raspberry Pi online documentation to
 finally 
 
 The instructions on this page were derived through trial-and-error and,
-when that failed, through reading online documentation.  Everything you need
-to know will be found by reading documents starting at:
+when that failed, through reading online documentation.  Everything you
+need to know will be found by reading documents starting at:
   - [The Raspberry Pi install directions](https://www.raspberrypi.org/documentation/installation/installing-images/linux.md)
   - [Raspberry Pi configuration pages](https://www.raspberrypi.org/documentation/configuration/)
 

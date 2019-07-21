@@ -63,6 +63,11 @@ this document.
          psk="<password for your WiFi>"
       }
       ~~~
+
+    Don't be afraid to include two or more networks if your router
+    supports multiple protocols, or if you have multiple wireless
+    routers.  That will increase your chances of making the connection.
+
   - Create an empty file named **ssh**
     ~~~.sh
     $ touch ssh
@@ -86,7 +91,7 @@ this document.
     $ sudo halt --poweroff
     ~~~
 
-    of
+    or
 
     ~~~.sh
     $ sudo poweroff

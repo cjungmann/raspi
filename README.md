@@ -73,6 +73,24 @@ this document.
     directory with another computer every time you need SSH access unless
     you configure your device to allow SSH.  See instructions below.
 
+- Insert the SD Card into the Raspberry Pi and Power Up.
+  - Only after a few failures did I discover I needed a more generous
+    power supply.  The specs says that the device needs 5 volts DC and
+    a minimum of 2.5 Amps.
+  - Avoid turning off the device by removing the power cord.  Use SSH
+    as described below, then issue the **halt** command:
+
+    ~~~.sh
+    $ sudo halt --poweroff
+    ~~~
+
+    of
+
+    ~~~.sh
+    $ sudo poweroff
+    ~~~
+    
+
 ## Connect to Raspberry Pi with SSH
 
 SSH is the best way to connect to a headless Raspberry Pi device.

@@ -127,8 +127,12 @@ sufficient to get the address.
   your consideration to new or unknown IP addresses.
 
   ~~~.sh
-  $ nmap -sn 192.168.0.0/24
+  $ nmap -n 192.168.0.0/24
   ~~~
+
+  This scan will take a while because it's also scanning each host's
+  ports.  Look for a host with only an SSH port open, that is likely
+  to be your Raspberry Pi device.
 
 ### Establish an SSH Session
 

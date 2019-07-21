@@ -47,6 +47,8 @@ this document.
     - Since the directories are not mounted, you can't use **umount** to
       ensure all the writes are done.
 
+  - Remove and reinsert the SD card to mount the partitions.
+
 - Modify */boot* files before first boot for *network* and *ssh*.
   - Go to the boot directory (mounted at */media/chuck/boot* on my computer)
   - Create a file **wpa_supplicant.conf** in the */boot* directory.

@@ -40,7 +40,7 @@ this document.
     **not** */dev/sda/sda1*.  Use the following example as a hint.
 
     ~~~.sh
-    $ dd bs=4M if=2019-07-10-raspbian-buster-lite.img of=/dev/sda status=progress conv=fsync
+    $ sudo dd bs=4M if=2019-07-10-raspbian-buster-lite.img of=/dev/sda status=progress conv=fsync
     ~~~
 
   - Use **sync** before removing the card to ensure it is done writing.

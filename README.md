@@ -72,6 +72,9 @@ this document.
     ~~~.sh
     $ touch ssh
     ~~~
+  - Optional: Change the hostname.  The default hostname, *raspberrypi*
+    may cause confusion if there are multiple Raspberry Pi devices on
+    your network.  This is important for headless IP discovery.
   - Unmount the */media/chuck/boot* and */media/chuck/rootfs* directories
     before removing the SD card.  Use either the **umount** command or
     a file manager program.
@@ -110,6 +113,21 @@ This is not very convenient.  The MAC address is not printed on the
 device, so you can't force your DHCP server to assign a specific IP
 address.  You have to get the IP address from the device itself.
 
+#### Easiest Headless Discovery Method
+
+Your first attempt should be the easiest method.  Use the hostname
+you set above (or *raspberrypi* if you didn't change it) with
+**ping** to discover your device:
+
+~~~sh
+$ ping raspberrypi.local
+~~~
+
+If the command takes a long time to return, it's not working.
+Press Control-C to exit and try the other methods below.
+
+#### Painful Headless Discovery Methods
+
 Following are three methods for discovering the device's IP address.
 There may be other ways to do it, but one of these three should be
 sufficient to get the address.
@@ -124,10 +142,11 @@ sufficient to get the address.
 - **nmap** command: Install and use the **nmap** command to scan the
   computers on your network.  Invoke the command with a network mask,
   then look at the output, eliminating familiar IP addresses to limit
-  your consideration to new or unknown IP addresses.
+  your consideration to new or unknown IP addresses.  The following
+  call to **nmap** scans and lists the most common ports.
 
   ~~~.sh
-  $ nmap -n 192.168.0.0/24
+  $ nmap -F 192.168.0.0/24
   ~~~
 
   This scan will take a while because it's also scanning each host's

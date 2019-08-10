@@ -79,7 +79,13 @@ this document.
 
     Change the hostname in */etc/hostname*, and if */etc/hostname* is
     changed, the local hostname in */etc/hosts* must also be changed
-    to match.
+    to match.  Use the following commands by setting variable *hname*
+    first, then copy and past the last three lines into a console.
+
+    These changes can be made at the same time as the *wpa_supplicant.conf*
+    and *ssh* files.  On my computer (that path for which should be
+    changed according to the device from which it is being edited), the
+    files are in */media/chuck/rootfs/etc*.
 
   - Unmount the */media/chuck/boot* and */media/chuck/rootfs* directories
     before removing the SD card.  Use either the **umount** command or

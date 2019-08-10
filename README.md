@@ -72,12 +72,19 @@ this document.
     ~~~.sh
     $ touch ssh
     ~~~
+
   - Optional: Change the hostname.  The default hostname, *raspberrypi*
     may cause confusion if there are multiple Raspberry Pi devices on
     your network.  This is important for headless IP discovery.
+
+    Change the hostname in */etc/hostname*, and if */etc/hostname* is
+    changed, the local hostname in */etc/hosts* must also be changed
+    to match.
+
   - Unmount the */media/chuck/boot* and */media/chuck/rootfs* directories
     before removing the SD card.  Use either the **umount** command or
     a file manager program.
+
   - The **ssh** file is always deleted from the **/boot** directory.
     You will need to manually create the **ssh** file in the */boot*
     directory with another computer every time you need SSH access unless

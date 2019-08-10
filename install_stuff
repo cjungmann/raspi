@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+
+is_root() { [ "$USER" == "root" ]; }
+
+set_text_background()
+{
+    case "$1" in
+        default) echo -n "[49m" ;;
+        black)   echo -n "[40m" ;;
+        red)     echo -n "[41m" ;;
+        green)   echo -n "[42m" ;;
+        brown)   echo -n "[43m" ;;
+        yellow)  echo -n "[43m" ;;
+        blue)    echo -n "[44m" ;;
+        magenta) echo -n "[45m" ;;
+        cyan)    echo -n "[46m" ;;
+        white)   echo -n "[47m" ;;
+    esac
+}
+
+set_text_foreground()
+{
+    case "$1" in
+        black)   echo -n "[30m"   ;;
+        grey)    echo -n "[1;30m" ;;
+        red)     echo -n "[1;31m" ;;
+        green)   echo -n "[1;32m" ;;
+        brown)   echo -n "[2;33m" ;;
+        yellow)  echo -n "[1;33m" ;;
+        blue)    echo -n "[1;34m" ;;
+        magenta) echo -n "[1;35m" ;;
+        cyan)    echo -n "[1;36m" ;;
+        white)   echo -n "[1;37m" ;;
+    esac
+}
+
+
+cecho()
+{
+    local msg="$1"
+    local color="${2:-green}"
+    local background="${3:-default}"
+
+    set_text_background "$background"
+    set_text_foreground "$color"
+    echo "${msg}[0m"
+}
+
+exit_if_not_root() { if ! is_root; then echo "Must be root; use sudo."; exit 1; fi; }
+
+update_and_upgrade()
+{
+    apt-get update
+    (echo 'y') | apt-get upgrade
+}
+
+install_command()
+{
+    local repo="$1"
+    local rtest="${2:-$repo}"
+
+    which "$rtest"
+    if [ $? -eq 0 ]; then
+        cecho "'$repo' already installed; skipping $repo install." green
+    else
+        cecho "Installing '$repo'." green
+        (echo 'y') | apt-get install "${repo}"
+    fi
+}
+
+install_utils()
+{
+    install_command "emacs25-nox" "emacs"
+    install_command "git"
+    install_command "libfcgi-dev" "spawn-fcgi"
+}
+
+install_mariadb()
+{
+    which mariadb
+    if [ $? -eq 0 ]; then
+        cecho "MariaDB already installed; skipping MariaDB install." green
+    else
+        cecho "Installing MariaDB" green
+        (echo 'y') | apt-get install mariadb-server libmariadb-dev
+
+        cecho "Make /usr/include/mysql link to /usr/include/mariadb for compile compatibility." green
+        cd /usr/include
+        ln -s mariadb mysql
+        cd -
+
+        mysql_secure_installation
+    fi
+}
+
+install_lighttpd()
+{
+    which lighttpd
+    if [ $? -eq 0 ]; then
+        cecho "lighttpd already installed, skipping lighttpd install." green
+    else
+        cecho "Installing lighttpd and lighttpd-doc" green
+        (echo 'y') | apt-get install lighttpd lighttpd-doc
+    fi
+}
+
+install_schemaserver()
+{
+    local pwd="${PWD}"
+    cecho "Cloning SchemaServer" green
+    git clone https://www.github.com/cjungmann/SchemaServer
+    if [ $? -eq 0 ]; then
+       cd SchemaServer/src
+
+       cecho "Making SchemaServer" green
+       configure
+       make
+
+       cecho "Changing ownership to ${SUDO_USER}:${SUDO_USER}" green
+       chown "${SUDO_USER}:${SUDO_USER}" -R ./[^.]*
+
+       if [ $? -eq 0 ]; then
+           cecho "Installing SchemaServer" green
+           make install
+           if [ $? -eq 0 ]; then
+               cecho "Successfull installed SchemaServer." green
+               cd "${pwd}"
+           else
+               cecho "Failed to install SchemaServer." red
+               exit 1
+           fi
+       else
+           cecho "Failed to make SchemaServer." red
+           exit 1
+       fi
+    else
+        cecho "Failed to download SchemaServer." red
+        exit 1
+    fi
+}
+
+install_schemafw()
+{
+    local pwd="${PWD}"
+    cecho "Cloning SchemaFramework" green
+    git clone https://www.github.com/cjungmann/schemafw
+    if [ $? -eq 0 ]; then
+        cd schemafw/install
+        cecho "Installing Schema Framework" green
+        install
+    else
+        cecho "Failed to download schemafw." red
+        exit 1
+    fi
+}
+
+install_schemafw_entire()
+{
+    lighty-enable-mod fastcgi
+    local dpath="/home/${SUDO_USER}/Downloads"
+
+    if ! [ -d  "$dpath" ]; then
+        mkdir "$dpath"
+        chown "${SUDO_USER}" "${dpath}"
+        cd "${dpath}"
+        install_schemaserver
+        install_schemafw
+    fi
+}
+
+
+
+exit_if_not_root
+
+update_and_upgrade
+install_utils
+install_lighttpd
+install_mariadb
+install_schemafw_entire
+
+

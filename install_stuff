@@ -88,6 +88,9 @@ install_mariadb()
         cd /usr/include
         ln -s mariadb mysql
         cd -
+        cd /usr/bin
+        cp -s mariadb_config mysql_config
+        cd -
 
         mysql_secure_installation
     fi
@@ -107,17 +110,37 @@ install_lighttpd()
 install_schemaserver()
 {
     local pwd="${PWD}"
-    cecho "Cloning SchemaServer" green
-    git clone https://www.github.com/cjungmann/SchemaServer
-    if [ $? -eq 0 ]; then
-       cd SchemaServer/src
+
+    if ! [ -d SchemaServer ]; then
+        cecho "Cloning SchemaServer" green
+        git clone https://www.github.com/cjungmann/SchemaServer
+
+        if [ $? -ne 0 ]; then
+            cecho "Failed to download SchemaServer." red
+            exit 1
+        fi
+    fi
+
+    if [ -d SchemaServer ]; then
+        cd SchemaServer/src
+
+        git checkout dev
+        git pull origin
+
+       cecho "Configuring SchemaServer" green
+       ./configure
+       if [ $? -ne 0 ]; then
+           exit 1
+       fi
 
        cecho "Making SchemaServer" green
-       configure
        make
+       if [ $? -ne 0 ]; then
+           exit 1
+       fi
 
-       cecho "Changing ownership to ${SUDO_USER}:${SUDO_USER}" green
-       chown "${SUDO_USER}:${SUDO_USER}" -R ./[^.]*
+       # cecho "Changing ownership to ${SUDO_USER}:${SUDO_USER}" green
+       # chown "${SUDO_USER}:${SUDO_USER}" -R ./[^.]*
 
        if [ $? -eq 0 ]; then
            cecho "Installing SchemaServer" green
@@ -133,9 +156,6 @@ install_schemaserver()
            cecho "Failed to make SchemaServer." red
            exit 1
        fi
-    else
-        cecho "Failed to download SchemaServer." red
-        exit 1
     fi
 }
 
@@ -162,6 +182,9 @@ install_schemafw_entire()
     if ! [ -d  "$dpath" ]; then
         mkdir "$dpath"
         chown "${SUDO_USER}" "${dpath}"
+    fi
+
+    if [ -d "$dpath" ]; then
         cd "${dpath}"
         install_schemaserver
         install_schemafw

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+declare pinginfo=$( ping -c 1 -q raspberrypi.local )
+declare ipregex='\(([0-9]{1,3}(\.[0-9]{1,3}){3})\)'
+declare piip
+
+if [[ "$pinginfo" =~ $ipregex ]]; then
+    piip="${BASH_REMATCH[1]}"
+
+    echo "Using [34;1m${piip}[0m and default user [34;1mpi[0m to ssh to a raspberry pi."
+    echo "Try the default password, [34;1mraspberry[0m first."
+
+    ssh -l pi "${piip}"
+fi

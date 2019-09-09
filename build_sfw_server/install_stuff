@@ -96,6 +96,15 @@ install_mariadb()
     fi
 }
 
+add_lighttpd_dirs()
+{
+    cd /etc/lighttpd
+    mkdir sites-available sites-enabled
+    if [ $? -ne 0 ]; then
+        sed -i '/^include.*conf-enabled.*/include \"/etc/lighttpd/sites-enabled/*.conf\"' lighttpd.conf
+    fi
+}
+
 install_lighttpd()
 {
     which lighttpd
@@ -104,6 +113,8 @@ install_lighttpd()
     else
         cecho "Installing lighttpd and lighttpd-doc" green
         (echo 'y') | apt-get install lighttpd lighttpd-doc
+
+        install_lighttpd_dirs
     fi
 }
 

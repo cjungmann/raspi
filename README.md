@@ -217,6 +217,19 @@ for better security.
   - Open option **1 Change User Password**.
   - Set the new password.
 
+## Useful Raspberry Pi Utilities
+
+The pre-built Raspberry Pi OS *Raspbian* includes some useful utilities.
+
+- **vcgencmd** is a command that reports on the device.  Within the
+  command, there are a couple of useful commands:
+  - **vcgencd commands** returns a comma-separated list of vcgencmd
+    commands.
+  - **vcgencmd measure_temp** returns the current CPU temperature.
+  - **vcgencmd get_throttled** returns 0 or 1 if the device is
+    currently slowed for safety against excess heat.
+
+
 ## Sources of Useful Information
 
 I couldn't have figured this out without the following resources.

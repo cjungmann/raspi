@@ -229,6 +229,9 @@ The pre-built Raspberry Pi OS *Raspbian* includes some useful utilities.
   - **vcgencmd get_throttled** returns 0 or 1 if the device is
     currently slowed for safety against excess heat.
 
+- **raspi-config** shows a menu for setting various configuration
+  options.
+
 
 ## Sources of Useful Information
 

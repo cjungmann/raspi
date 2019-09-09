@@ -139,6 +139,17 @@ $ ping raspberrypi.local
 If the command takes a long time to return, it's not working.
 Press Control-C to exit and try the other methods below.
 
+##### Tiny Login Script
+
+This repository includes a tiny script, **sshpi** to uses the
+ping method to discover the IP address of a Raspberry Pi on a
+local network, then calls **ssh** using user **pi**, and offering
+a reminder that the default password is *raspberry*.
+
+While leaving the default user name and password enabled is a
+safety concern, this script is a useful shortcut while configuring
+the device.
+
 #### Painful Headless Discovery Methods
 
 Following are three methods for discovering the device's IP address.

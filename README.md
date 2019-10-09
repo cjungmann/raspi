@@ -139,6 +139,24 @@ $ ping raspberrypi.local
 If the command takes a long time to return, it's not working.
 Press Control-C to exit and try the other methods below.
 
+#### Better Headless Discovery Method
+
+I saw this method on [this page](https://howchoo.com/g/njy4zdm3mwy/how-to-run-a-raspberry-pi-cluster-with-docker-swarm?utm_source=taboola&utm_medium=cpc&utm_campaign=int_pi_automated#find-the-ip-address-of-each-node)
+about making a RaspberryPi cluster.  For that application, it was
+necessary to find all of the ip addresses. The problem with the
+**ping** method above that it only works for a single device.
+
+Use the following command, adjusting the base IP address to match
+your network.
+
+~~~sh
+sudo nmap -sn 192.168.0.1/24
+~~~
+
+The secret is the **-sn** option, that scans for devices using
+**ping** and skips the port scan, greatly speeding up the process.
+Look at the **man** page for **nmap**.
+
 ##### Tiny Login Script
 
 This repository includes a tiny script, **sshpi** to uses the

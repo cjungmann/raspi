@@ -43,6 +43,9 @@ this document.
     $ sudo dd bs=4M if=2019-07-10-raspbian-buster-lite.img of=/dev/sda status=progress conv=fsync
     ~~~
 
+    **Alternate method** use **build_sd** to install and configure
+    the sd card.   See Below.
+
   - Use **sync** before removing the card to ensure it is done writing.
     - Since the directories are not mounted, you can't use **umount** to
       ensure all the writes are done.
@@ -120,6 +123,9 @@ SSH is the best way to connect to a headless Raspberry Pi device.
 The following instructions will help configure your Raspberry Pi
 for SSH.
 
+In some cases, it may be necessary to SSH over Bluetooth.  Look
+at [this guide](README_bluetooth.md) for some ideas.
+
 ### Determine the IP address
 
 This is not very convenient.  The MAC address is not printed on the
@@ -134,6 +140,12 @@ you set above (or *raspberrypi* if you didn't change it) with
 
 ~~~sh
 $ ping raspberrypi.local
+~~~
+
+or simply ssh to the pi with:
+
+~~~sh
+$ ssh pi@raspberrypi.local
 ~~~
 
 If the command takes a long time to return, it's not working.
@@ -250,6 +262,22 @@ The pre-built Raspberry Pi OS *Raspbian* includes some useful utilities.
 - **raspi-config** shows a menu for setting various configuration
   options.
 
+## BUILD_SD
+
+This configuration script will install an image file to a target
+SD card.  The desired image file must be in ths **raspi** directory
+(where this README.md file resides), and you must know the path
+in */dev* where the SD device is located (e.g. */dev/sda*).
+
+The utility will do a simple-minded confirmation of the target,
+find the latest **.img** file by filename, then use **dd** to
+install the image.
+
+One the image is installed, it will mount the **boot** partition
+and copy files for initial setup, for WiFi and **ssh**.  Then it
+mounts the **rootfs** partition and copies a couple of files in
+the hope it can enable **ssh** over bluetooth.  This has failed
+so far.
 
 ## Sources of Useful Information
 

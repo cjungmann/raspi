@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+
+show_usage()
+{
+    echo "build_sd [name of device]"
+    echo "example: build_sd sda"
+}
+
+is_root() { [ "$USER" = "root" ]; }
+
+confirm_Target()
+{
+    if [ -z "$Target" ]; then
+        show_usage
+        exit 1
+    fi
+
+    declare -a lines
+    declare -i count_disk
+    local IFS=$'\n'
+    local regex="$Target[[:space:]]\+.*disk"
+    lines=( $( lsblk --list | grep $regex - ) )
+    if [ $? -eq 0 ]; then
+        count_disk="${#lines[@]}"
+    fi
+
+    # return value from final test:
+    [ "$count_disk" -eq 1 ]
+}
+
+get_image_filename()
+{
+    local -a lines
+    local -i ndx
+    local IFS=$'\n'
+
+    lines=( $( ls | grep \.img - ) )
+    if [ $? -eq 0 ] && [ "${#lines[@]}" -gt 0 ]; then
+        ndx="$(( ${#lines[@]} -1 ))"
+        echo "${lines[$ndx]}"
+        return 0
+    else
+        echo "Failed to find image candidates."
+    fi
+
+    return 1
+}
+
+copy_image()
+{
+    local path_img="$1"
+    local -a args=(
+        bs=4M
+        if="${path_img}"
+        of="/dev/${Target}"
+        status=progress
+        conv=fsync
+    )
+
+    echo "Using arguments: [32;1m${args[*]}[m"
+
+    if is_root; then
+        sudo dd "${args[@]}"
+        if [ $? -eq 0 ]; then
+            return 0
+        fi
+    else
+        echo "Failed to copy image: must be root."
+    fi
+
+    return 1
+}
+
+get_boot_partition()
+{
+    local -i maj min
+    local line_disk=$( lsblk --list | grep "$Target" -)
+    if [[ "$line_disk" =~ $"$Target"[[:space:]]+([[:digit:]]+):([[:digit:]]) ]]; then
+        maj="${BASH_REMATCH[1]}"
+        min="${BASH_REMATCH[2]}"
+    else
+        echo "BASH Regex failed"
+        exit 1
+    fi
+
+    # local regx="$Target"[[:digit:]]+[[:space:]]+"$maj"
+    local regx="$Target"[[:digit:]]\\+[[:space:]]\\+"$maj":1
+    line_disk=$( lsblk --list | grep $regx - )
+    if [ $? -eq 0 ]; then
+        if [[ "$line_disk" =~ part[[:space:]]+(.*)$ ]]; then
+            echo "${BASH_REMATCH[1]}"
+            return 0
+        fi
+    else
+        echo "GREP regex failed [32;1m$regx[m"
+    fi
+
+    exit 1
+}
+
+configure_boot()
+{
+    if is_root; then
+        # Work with boot partition:
+        mount /dev/"$Target"1 mpoint
+        cp wpa_supplicant.conf mpoint
+        touch mpoint/ssh
+        sync
+        umount mpoint
+
+        # Work with rootfs partition:
+        mount /dev/"$Target"2 mpoint
+        cp bt_serial.sh mpoint/home/pi
+
+        sed -i '/^exit 0/i sudo /home/pi/bt_serial.sh &\n' mpoint/etc/rc.local
+        sync
+        umount mpoint
+
+        echo "[33;1mDo not forget to set SSH with [34;1mraspi-config[33;1m upon first boot.[m"
+
+    else
+        echo "Must be root to mount and copy files."
+    fi
+}
+
+
+#########################
+# Execution Begins Here #
+#########################
+
+declare Target="$1"
+
+declare bootdir
+declare startingdir="$PWD"
+
+declare image
+
+if confirm_Target; then
+    configure_boot
+    # image=$( get_image_filename )
+    # if [ $? -eq 0 ]; then
+    #     copy_image "$image"
+    #     if [ $? -eq 0 ]; then
+    #         configure_boot
+    #     fi
+    # fi
+else
+    echo "Suspicious target"
+fi

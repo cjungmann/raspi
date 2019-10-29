@@ -98,28 +98,45 @@ get_boot_partition()
     exit 1
 }
 
-configure_boot()
+configure_boot_partition()
 {
     if is_root; then
         # Work with boot partition:
         mount /dev/"$Target"1 mpoint
         cp wpa_supplicant.conf mpoint
         touch mpoint/ssh
-        sync
-        umount mpoint
-
-        # Work with rootfs partition:
-        mount /dev/"$Target"2 mpoint
-        cp bt_serial.sh mpoint/home/pi
-
-        sed -i '/^exit 0/i sudo /home/pi/bt_serial.sh &\n' mpoint/etc/rc.local
-        sync
-        umount mpoint
-
         echo "[33;1mDo not forget to set SSH with [34;1mraspi-config[33;1m upon first boot.[m"
 
     else
         echo "Must be root to mount and copy files."
+    fi
+}
+
+configure_root_partition()
+{
+    if is_root; then
+        cp load_apps mpoint/home/pi/load_apps
+        ./config_bluetooth
+    fi
+}
+
+configure_sd_card()
+{
+    if is_root; then
+        # Work with boot partition:
+        echo "[33;1mMounting the boot partition.[m"
+        mount /dev/"$Target"1 mpoint
+        configure_boot_partition
+        sync
+        umount mpoint
+
+        echo "[33;1mMounting the root partition.[m"
+        mount /dev/"$Target"2 mpoint
+        configure_root_partition
+        sync
+        umount mpoint
+    else
+        echo "Must be root to mount partitions."
     fi
 }
 
@@ -136,14 +153,13 @@ declare startingdir="$PWD"
 declare image
 
 if confirm_Target; then
-    configure_boot
-    # image=$( get_image_filename )
-    # if [ $? -eq 0 ]; then
-    #     copy_image "$image"
-    #     if [ $? -eq 0 ]; then
-    #         configure_boot
-    #     fi
-    # fi
+    image=$( get_image_filename )
+    if [ $? -eq 0 ]; then
+        copy_image "$image"
+        if [ $? -eq 0 ]; then
+            configure_sd_card
+        fi
+    fi
 else
     echo "Suspicious target"
 fi

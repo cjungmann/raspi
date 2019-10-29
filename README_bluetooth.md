@@ -26,6 +26,19 @@ referring to documents I find on the internet, and I will
 create a list of links to help remember how I do it (assuming
 I can actually do it).
 
+- [DigiKey](digikey.com) has some [advice on bluetooth configuration](https://www.digikey.com/en/maker/blogs/raspberry-pi-wi-fi-bluetooth-setup-how-to-configure-your-pi-4-model-b-3-model-b).
+
+- I originally had trouble setting up bluetooth.  When debugging
+  bluetooth with **systemctl**, one error message indicated
+  that the Sap driver failed to initialize.  The
+  (RaspberryPi Forum)[https://www.raspberrypi.org/forums/viewtopic.php?t=131999]
+  has a discussion about how to solve this.
+
+- **bluetoothctl** has an inadequate man page.  I found [this](http://www.linux-magazine.com/Issues/2017/197/Command-Line-bluetoothctl)
+  page at [Linux Magazine](http://www.linux-magazine.com) that offers
+  more help.
+
+
 - [Mozilla Hacks](https://hacks.mozilla.org/2017/02/headless-raspberry-pi-configuration-over-bluetooth/)
   This is the first useful document that guided me.
   Changes to system resulting from following advice on

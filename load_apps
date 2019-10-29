@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+is_root() { [ "$USER" = "root" ]; }
+
+show_usage()
+{
+    echo "This utility must be run as root to install applications."
+}
+
+do_initial_os_update()
+{
+    apt-get update
+}
+
+#########################
+# Execution Begins Here #
+#########################
+
+if is_root; then
+    apt-get update
+    apt-get install emacs-nox
+    apt-get install locate
+else
+    show_usage
+fi
+

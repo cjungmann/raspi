@@ -116,7 +116,7 @@ configure_root_partition()
 {
     if is_root; then
         cp load_apps mpoint/home/pi/load_apps
-        ./config_bluetooth
+        # ./config_bluetooth
     fi
 }
 

@@ -116,11 +116,11 @@ this document.
     $ sudo poweroff
     ~~~
 
-  - On first boot-up
-    - Before attempting to install any program, update the repositories: 
-      `sudo apt-get update`
-    - Install essential applications, like emacs: 
-      `sudo apt-get install emacs-nox`
+- On first boot-up
+  - Before attempting to install any program, update the repositories: 
+    `sudo apt-get update`
+  - Install essential applications, like emacs: 
+    `sudo apt-get install emacs-nox`
 
 ## Connect to Raspberry Pi with SSH
 

@@ -1,6 +1,49 @@
 #!/usr/bin/env bash
 
+coloron="[31;1m"
+coloroff="[m"
+
 is_root() { [ "$USER" = "root" ]; }
+
+already_installed()
+{
+    local pname="$1"
+    local gresult
+    gresult=$( dpkg -s "${pname}" 2>/dev/null | grep ^Status )
+    # falling out of function will allow calling function to
+    # query the result of the `which` command.
+}
+
+already_snapped()
+{
+    local name="$1"
+    local gresult=$( which "$name" > /dev/null  )
+    # falling out of function will allow calling function to
+    # query the result of the `which` command.
+}    
+
+hl_snap()
+{
+    local name="$1"
+    if already_snapped "$name"; then
+        echo "${coloron}${name}${coloroff} is already installed with snap"
+    else
+        echo "Installing ${coloron}${name}${coloroff}."
+        snap install "${name}"
+    fi
+}
+
+hl_install()
+{
+    local name="$1"
+
+    if already_installed "$name"; then
+        echo ${coloron}${name}${coloroff} is already installed
+    else
+        echo Installing ${coloron}${name}${coloroff}
+        sudo apt-get install "${name}"
+    fi
+}
 
 show_usage()
 {
@@ -18,8 +61,9 @@ do_initial_os_update()
 
 if is_root; then
     apt-get update
-    apt-get install emacs-nox
-    apt-get install locate
+    hl_install emacs-nox
+    hl_install locate
+    hl_install git
 else
     show_usage
 fi

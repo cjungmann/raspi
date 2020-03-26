@@ -2,8 +2,11 @@
 
 show_usage()
 {
+    echo "You must identify the SD card: [32;1msda[m or [32;1msdb[m, etc."
+    echo "You can use [32;1mlsblk[m to display the block devices."
+    echo
     echo "build_sd [name of device]"
-    echo "example: build_sd sda"
+    echo "example: [32;1m./build_sd sda[m"
 }
 
 is_root() { [ "$USER" = "root" ]; }
@@ -16,7 +19,7 @@ confirm_Target()
     fi
 
     declare -a lines
-    declare -i count_disk
+    declare -i count_disk=0
     local IFS=$'\n'
     local regex="$Target[[:space:]]\+.*disk"
     lines=( $( lsblk --list | grep $regex - ) )
@@ -106,7 +109,6 @@ configure_boot_partition()
         cp wpa_supplicant.conf mpoint
         touch mpoint/ssh
         echo "[33;1mDo not forget to set SSH with [34;1mraspi-config[33;1m upon first boot.[m"
-
     else
         echo "Must be root to mount and copy files."
     fi
@@ -122,19 +124,34 @@ configure_root_partition()
 
 configure_sd_card()
 {
+    if ! [ -d mpoint ]; then
+        mkdir mpoint
+    fi
+
     if is_root; then
         # Work with boot partition:
         echo "[33;1mMounting the boot partition.[m"
         mount /dev/"$Target"1 mpoint
-        configure_boot_partition
-        sync
-        umount mpoint
+        if [ "$?" -eq 0 ]; then
+            configure_boot_partition
+            sync
+            umount mpoint
 
-        echo "[33;1mMounting the root partition.[m"
-        mount /dev/"$Target"2 mpoint
-        configure_root_partition
-        sync
-        umount mpoint
+            echo "[33;1mMounting the root partition.[m"
+            mount /dev/"$Target"2 mpoint
+            if [ "$?" -eq 0 ]; then
+                configure_root_partition
+                sync
+                umount mpoint
+            else
+            echo "Failed to mount /dev/${Target}2, error code $?"
+            fi
+
+        else
+            echo "Failed to mount /dev/${Target}1, error code $?"
+        fi
+
+
     else
         echo "Must be root to mount partitions."
     fi
@@ -144,6 +161,18 @@ configure_sd_card()
 #########################
 # Execution Begins Here #
 #########################
+
+if [ "$#" -eq 0 ]; then
+    show_usage
+    exit 1
+fi
+
+if ! [ -f "wpa_supplicant.conf" ]; then
+    echo "Please prepare a [32;1mwpa_supplicant.conf[m file, in this"
+    echo "directory, to be copied to the SD card."
+    echo
+    echo "View the README.md file for a template for the file."
+fi
 
 declare Target="$1"
 

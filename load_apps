@@ -64,6 +64,10 @@ if is_root; then
     hl_install emacs-nox
     hl_install locate
     hl_install git
+
+    # mdless is a tool for reading markdown files.  We need snapd to install it.
+    hl_install snapd
+    hl_snap mdless
 else
     show_usage
 fi

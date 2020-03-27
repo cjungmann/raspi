@@ -41,7 +41,7 @@ hl_install()
         echo ${coloron}${name}${coloroff} is already installed
     else
         echo Installing ${coloron}${name}${coloroff}
-        sudo apt-get install "${name}"
+        sudo apt-get -y install "${name}"
     fi
 }
 

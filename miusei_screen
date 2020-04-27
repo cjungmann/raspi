@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# Building a Raspberry Pi with a Meuzei screen may result in a flashing
+# blue screen.  The commands in this script will execute the steps needed
+# to prepare the screen.
+
+cd ~/Downloads
+git clone https://github.com/goodtft/LCD-show.git
+cd LCD-show
+sudo ./MPI4008-show
+
+# I encountered errors on my first attempt to load this utility.  It
+# was because if a missing utility, and the problem was resolved by
+# calling:
+#
+# sudo apt-get --fix-broken install
+
+# That is all (for now).

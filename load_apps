@@ -1,9 +1,35 @@
 #!/usr/bin/env bash
 
-coloron="[31;1m"
-coloroff="[m"
+declare coloron="[31;1m"
+declare coloroff="[m"
 
+declare -f NECHO
 is_root() { [ "$USER" = "root" ]; }
+
+echo_notify()
+{
+    local msg="${1}"
+
+    local -a rearr=(
+        '(^|[^_])'     # match beginning of string or a of non-asterisk character
+        '_'              # match the *
+        '([^_]+)'      # match characters between the pair of asterisks
+        '_'              # match the *
+        '([^_]|$)'     # match a non-asterisk character or the end of the string
+    )
+
+    local IFS=""
+    echo "$msg" | sed -E "s/${rearr[*]}/\1[31;1m\2[m\3/g" >&2
+}
+
+nc_notify()
+{
+    local msg="${1}"
+
+    echo_notify "sending $msg to $nc_address:"
+
+    echo "$msg" | nc "$nc_address" "$nc_port"
+}
 
 already_installed()
 {
@@ -26,9 +52,9 @@ hl_snap()
 {
     local name="$1"
     if already_snapped "$name"; then
-        echo "${coloron}${name}${coloroff} is already installed with snap"
+        $NECHO "_${name}_ is already installed with snap"
     else
-        echo "Installing ${coloron}${name}${coloroff}."
+        $NECHO "Installing _${name}_."
         snap install "${name}"
     fi
 }
@@ -38,16 +64,16 @@ hl_install()
     local name="$1"
 
     if already_installed "$name"; then
-        echo ${coloron}${name}${coloroff} is already installed
+        $NECHO "_${name}_ is already installed"
     else
-        echo Installing ${coloron}${name}${coloroff}
+        $NECHO "Installing _${name}_"
         sudo apt-get -y install "${name}"
     fi
 }
 
 show_usage()
 {
-    echo "This utility must be run as root to install applications."
+    $NECHO "This utility must be run as root to install applications."
 }
 
 do_initial_os_update()
@@ -59,15 +85,49 @@ do_initial_os_update()
 # Execution Begins Here #
 #########################
 
+NECHO=echo_notify
+
+if [ -f "nc_address" ]; then
+    source nc_address
+    NECHO=nc_notify
+fi
+
 if is_root; then
+    echo "Announcing the commencement of [32;1mload_apps[m. (stdin)"
+    echo "Announcing the commencement of [32;1mload_apps[m. (stderr)" >&2
+
+    $NECHO "_Updating packages list to get latest version of software._"
     apt-get update
+
     hl_install emacs-nox
     hl_install locate
     hl_install git
 
+    hl_install isc-dhcp-server
+
     # mdless is a tool for reading markdown files.  We need snapd to install it.
-    hl_install snapd
-    hl_snap mdless
+    # hl_install snapd
+    # hl_snap mdless
+
+    # Enable systemd-resolved.service to enable resolvectl command
+    systemctl enable systemd-resolved.service
+
+    # Configure for EMACS use:
+    # Only change editor value if it's not already set.
+    if [ -z "$EDITOR" ]; then
+        echo "Setting empty EDITOR value to 'emacs'"
+        echo "export EDITOR=emacs"
+    fi
+
+    if grep -q -P 'INFOPATH.*emacs' ~/.bashrc; then
+        echo "Not changing INFOPATH to find emacs info page."
+    else
+        echo "Telling pinfo where to find emacs info page"
+        echo >> ~/.bashrc
+        echo "# Help pinfo find emacs info page" >> ~/.bashrc
+        echo "export INFOPATH=/usr/share/info/emacs" >> ~/.bashrc     # Make an alias so invoking 'info' opens 'pinfo'
+    fi
+
 else
     show_usage
 fi

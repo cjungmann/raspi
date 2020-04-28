@@ -15,4 +15,8 @@ sudo ./MPI4008-show
 #
 # sudo apt-get --fix-broken install
 
+# If these instructions do not solve your problems, I found the
+# information at http://www.lcdwiki.com/4inch_HDMI_Display-C
+
+
 # That is all (for now).

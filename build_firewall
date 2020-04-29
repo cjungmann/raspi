@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+cd Downloads
+git clone https://www.github.com/cjungmann/bash_clargs.git
+git clone https://www.github.com/cjungmann/iptables_firewall.git iptfwall
+
+cd iptfwall
+cp -s ../bash_clargs/bash_clargs .

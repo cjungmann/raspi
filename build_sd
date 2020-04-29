@@ -211,7 +211,8 @@ add_load_apps_to_rc_local()
 prepare_home_directory()
 {
     local pwd="$PWD"
-    cd mpoint/home/pi
+    cd "$RASPI_HOME"
+
 
     mkdir Downloads
     cp "$pwd/build_firewall" .
@@ -224,14 +225,38 @@ set_us_keyboard()
     sed -E -i 's/KBLAYOUT="[[:alnum:]]{2}"/KBLAYOUT="us"/' "$RASPI_ROOT/etc/default/keyboard"
 }
 
+perform_custom_settings()
+{
+    local -a scripts=( $( ls -1 ) )
+    local script
+    echo "In [32;1mperform_custom_settings[m, RASPI_HOME is '[33;1m$RASPI_HOME[m'"
+    for script in "${scripts[@]}"; do
+        if [ -e "$script" ]; then
+            echo "Executing [33;1m$script[m"
+            ( export RASPI_ROOT="$RASPI_ROOT" RASPI_HOME="$RASPI_HOME"; "./$script" )
+            echo "Returned from [33;1m$script[m"
+        fi
+    done
+}
+
 configure_root_partition()
 {
     local target=mpoint/etc/init.d
     if is_root; then
-        echo "Copying load_apps script to [32;1m${target}[m right now."
         cp load_apps "${target}/load_apps"
 
         prepare_home_directory
+
+        if [ -d init.d ]; then
+            pushd init.d
+            perform_custom_settings
+            popd
+        fi
+
+        if [ -d onload.d ]; then
+            cp -r onload.d "$RASPI_HOME/onload.d"
+        fi
+
         set_us_keyboard
 
         # Do this last, because rc.local will chown the contents
@@ -260,7 +285,7 @@ enable_ssh()
 
 configure_sd_card()
 {
-    local RASPI_ROOT
+    local RASPI_ROOT RASPI_HOME
     
     if ! [ -d mpoint ]; then
         mkdir mpoint
@@ -279,6 +304,8 @@ configure_sd_card()
             mount /dev/"$Target"2 mpoint
             if [ "$?" -eq 0 ]; then
                 RASPI_ROOT="${PWD}/mpoint"
+                RASPI_HOME="${RASPI_ROOT}/home/pi"
+
                 configure_root_partition
                 sync
                 umount mpoint

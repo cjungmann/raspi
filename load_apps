@@ -121,12 +121,6 @@ if is_root; then
     # hl_install snapd
     # hl_snap mdless
 
-    if [ -d /home/pi/onload.d ]; then
-        pushd /home/pi/onload.d
-        run_onload_scripts
-        popd
-    fi
-
     # Enable systemd-resolved.service to enable resolvectl command
     systemctl enable systemd-resolved.service
 
@@ -144,6 +138,13 @@ if is_root; then
         echo >> ~/.bashrc
         echo "# Help pinfo find emacs info page" >> ~/.bashrc
         echo "export INFOPATH=/usr/share/info/emacs" >> ~/.bashrc     # Make an alias so invoking 'info' opens 'pinfo'
+    fi
+
+    # Do custom scripts last, in case a script results in a reboot:
+    if [ -d /home/pi/onload.d ]; then
+        pushd /home/pi/onload.d
+        run_onload_scripts
+        popd
     fi
 
 else

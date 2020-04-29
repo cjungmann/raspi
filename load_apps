@@ -81,6 +81,15 @@ do_initial_os_update()
     apt-get update
 }
 
+run_onload_scripts()
+{
+    local -a scripts=( $( ls -1 ) )
+    local script
+    for script in "${scripts[@]}"; do
+        sudo "./$script"
+    done
+}
+
 #########################
 # Execution Begins Here #
 #########################
@@ -98,6 +107,9 @@ if is_root; then
 
     $NECHO "_Updating packages list to get latest version of software._"
     apt-get update
+    apt-get upgrade
+    apt-get install xserver-xorg-core
+    apt --fix-broken install
 
     hl_install emacs-nox
     hl_install locate
@@ -108,6 +120,12 @@ if is_root; then
     # mdless is a tool for reading markdown files.  We need snapd to install it.
     # hl_install snapd
     # hl_snap mdless
+
+    if [ -d /home/pi/onload.d ]; then
+        pushd /home/pi/onload.d
+        run_onload_scripts
+        popd
+    fi
 
     # Enable systemd-resolved.service to enable resolvectl command
     systemctl enable systemd-resolved.service

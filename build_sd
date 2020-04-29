@@ -17,6 +17,24 @@ show_usage()
 
 is_root() { [ "$USER" = "root" ]; }
 
+umount_wait()
+{
+    local target="$1"
+    local -i count=0
+    while true; do
+        if umount "$target"; then
+            return 0
+        fi
+
+        if [ $(( ++count )) -gt 5 ]; then
+            return 1
+        fi
+
+        sleep 1
+    done
+}
+
+
 un_mount()
 {
     local IFS=$'\n'
@@ -32,7 +50,7 @@ un_mount()
         mpath="${mounting[0]}"
         mmount="${mounting[2]}"
         echo "Unmounting [32;1m${mpath}[m at mount point [32;1m${mmount}[m"
-        umount "${mmount}"
+        umount_wait "${mmount}"
     done
 }
 
@@ -298,7 +316,7 @@ configure_sd_card()
         if [ "$?" -eq 0 ]; then
             configure_boot_partition
             sync
-            umount mpoint
+            umount_wait mpoint
 
             echo "[33;1mMounting the root partition /dev/${Target}2 to mpoint.[m"
             mount /dev/"$Target"2 mpoint
@@ -308,7 +326,7 @@ configure_sd_card()
 
                 configure_root_partition
                 sync
-                umount mpoint
+                umount_wait mpoint
             else
                 echo "Failed to mount /dev/${Target}2, error code $?"
                 lsblk

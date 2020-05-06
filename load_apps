@@ -86,7 +86,9 @@ run_onload_scripts()
     local -a scripts=( $( ls -1 ) )
     local script
     for script in "${scripts[@]}"; do
-        sudo "./$script"
+        if [ -x "$script" ] && ! [ "${script:0:1}" = '_' ]; then
+            sudo ./$script
+        fi
     done
 }
 

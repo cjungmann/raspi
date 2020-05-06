@@ -233,7 +233,11 @@ prepare_home_directory()
 
 
     mkdir Downloads
+
+    mkdir SetupScripts
+    cd SetupScripts
     cp "$pwd/build_firewall" .
+    cp "$pwd/miusei_screen" .
 
     cd "$pwd"
 }
@@ -247,12 +251,9 @@ perform_custom_settings()
 {
     local -a scripts=( $( ls -1 ) )
     local script
-    echo "In [32;1mperform_custom_settings[m, RASPI_HOME is '[33;1m$RASPI_HOME[m'"
     for script in "${scripts[@]}"; do
-        if [ -e "$script" ]; then
-            echo "Executing [33;1m$script[m"
+        if [ -x "$script" ] && ! [ "${script:0:1}" = '*' ]; then
             ( export RASPI_ROOT="$RASPI_ROOT" RASPI_HOME="$RASPI_HOME"; "./$script" )
-            echo "Returned from [33;1m$script[m"
         fi
     done
 }

@@ -134,7 +134,7 @@ if is_root; then
     fi
 
     if grep -q -P 'INFOPATH.*emacs' ~/.bashrc; then
-        echo "Not changing INFOPATH to find emacs info page."
+        echo "[31;1mNot changing INFOPATH to find emacs info page.[m"
     else
         echo "Telling pinfo where to find emacs info page"
         echo >> ~/.bashrc
@@ -148,10 +148,6 @@ if is_root; then
         run_onload_scripts
         popd
     fi
-
-    echo "Colorizing LESS for man and other pages."
-    echo            >> ~/.bashrc
-    cat less_colors >> ~/.bashrc
 
 else
     show_usage

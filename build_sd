@@ -231,6 +231,9 @@ prepare_home_directory()
     local pwd="$PWD"
     cd "$RASPI_HOME"
 
+    echo "Preparing colors for 'less' output in [32;1m$PWD[m."
+    echo                           >> .bashrc
+    cat "$startingdir/less_colors" >> .bashrc
 
     mkdir Downloads
 

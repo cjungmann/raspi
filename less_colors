@@ -1,0 +1,8 @@
+export LESS_TERMCAP_vb='[33;1m'  # vb = visual bell, 33;1 is yellow
+export LESS_TERMCAP_mb='[5;m'    # mb = start blink,  5 is blink
+export LESS_TERMCAP_md='[36;1m'  # md = start bold, 36;1 is bold cyan
+export LESS_TERMCAP_me='[m'      # me = end bold, blink, and underlind
+export LESS_TERMCAP_so='[43m'    # so = start standout (reverse video), 43 is brown background
+export LESS_TERMCAP_se='[49m'    # se = end standout, 49 is default background
+export LESS_TERMCAP_us='[32;1m'  # us = start underline, 32;1 is green bold
+export LESS_TERMCAP_ue='[m'      # ue = end underline, same console code as meq

@@ -149,6 +149,10 @@ if is_root; then
         popd
     fi
 
+    echo "Colorizing LESS for man and other pages."
+    echo            >> ~/.bashrc
+    cat less_colors >> ~/.bashrc
+
 else
     show_usage
 fi

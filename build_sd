@@ -269,6 +269,10 @@ configure_root_partition()
 
         prepare_home_directory
 
+        # Call load_apps with cron instead of rc.local:
+        cp load_apps "$RASPI_HOME/load_apps"
+        echo "@reboot /home/pi/load_apps" > "$RASPI_ROOT/var/spool/cron/crontabs/root"
+
         if [ -d init.d ]; then
             pushd init.d
             perform_custom_settings
@@ -283,7 +287,7 @@ configure_root_partition()
 
         # Do this last, because rc.local will chown the contents
         # of /home/pi so the scripts can be run as user 'pi'.
-        add_load_apps_to_rc_local
+        # add_load_apps_to_rc_local
 
         # enable_ssh
         # ./config_bluetooth

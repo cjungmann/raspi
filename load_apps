@@ -109,7 +109,7 @@ if is_root; then
 
     $NECHO "_Updating packages list to get latest version of software._"
     apt-get update
-    apt-get upgrade
+    apt-get -y upgrade
     apt-get install xserver-xorg-core
     apt --fix-broken install
 

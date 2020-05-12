@@ -251,14 +251,15 @@ prepare_firstboot()
 {
     local owd="$PWD"
     local libpath="$RASPI_ROOT/lib/systemd/system"
-    local wantpath="$RASPI_ROOT/etc/systemd/system/multi-user.target.wants"
+    local timerpath="$RASPI_ROOT/etc/systemd/system/timers.target.wants"
 
-    # Copy file to expected directory
-    cp $startingdir/firstboot.service "$libpath/firstboot.service"
+    # Copy service and timer files to expected directory
+    cp "$startingdir/firstboot.service" "$libpath/firstboot.service"
+    cp "$startingdir/firstboot.timer" "$libpath/firstboot.timer"
 
-    # Make symlink to path that will exist when mounted on raspberry pi:
-    cd "$wantpath"
-    ln -s "/lib/systemd/system/firstboot.service" "firstboot.service"
+    # Install timer file link
+    cd "$timerpath"
+    ln -s "/lib/systemd/system/firstboot.timer" "firstboot.timer"
 
     cd "$owd"
 }

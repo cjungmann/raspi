@@ -1,0 +1,11 @@
+[Unit]
+Description=Call a script on first boot to continue installation.
+After=network.target
+
+[Service]
+Type=simple
+Environment=USER='root'
+ExecStart=/bin/bash -c /home/pi/firstboot /home/pi/fbprogress
+
+[Install]
+WantedBy=multi-user.target

@@ -235,6 +235,8 @@ prepare_home_directory()
     echo                           >> .bashrc
     cat "$startingdir/less_colors" >> .bashrc
 
+    cp "$startingdir/load_apps" .
+    cp -s load_apps firstboot
     mkdir Downloads
 
     mkdir SetupScripts
@@ -243,6 +245,22 @@ prepare_home_directory()
     cp "$pwd/miusei_screen" .
 
     cd "$pwd"
+}
+
+prepare_firstboot()
+{
+    local owd="$PWD"
+    local libpath="$RASPI_ROOT/lib/systemd/system"
+    local wantpath="$RASPI_ROOT/etc/systemd/system/multi-user.target.wants"
+
+    # Copy file to expected directory
+    cp $startingdir/firstboot.service "$libpath/firstboot.service"
+
+    # Make symlink to path that will exist when mounted on raspberry pi:
+    cd "$wantpath"
+    ln -s "/lib/systemd/system/firstboot.service" "firstboot.service"
+
+    cd "$owd"
 }
 
 set_us_keyboard()
@@ -265,9 +283,9 @@ configure_root_partition()
 {
     local target=mpoint/etc/init.d
     if is_root; then
-        cp load_apps "${target}/load_apps"
 
         prepare_home_directory
+        prepare_firstboot
 
         if [ -d init.d ]; then
             pushd init.d
@@ -283,7 +301,7 @@ configure_root_partition()
 
         # Do this last, because rc.local will chown the contents
         # of /home/pi so the scripts can be run as user 'pi'.
-        add_load_apps_to_rc_local
+        # add_load_apps_to_rc_local
 
         # enable_ssh
         # ./config_bluetooth

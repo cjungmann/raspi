@@ -7,6 +7,10 @@
 cd ~/Downloads
 git clone https://github.com/goodtft/LCD-show.git
 cd LCD-show
+
+# apt-get install xserver-xorg-core
+# apt --fix-broken install
+
 sudo ./MPI4008-show
 
 # I encountered errors on my first attempt to load this utility.  It

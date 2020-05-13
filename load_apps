@@ -1,11 +1,27 @@
 #!/usr/bin/env bash
 
+declare ProgressTarget="$1"
+
 declare coloron="[31;1m"
 declare coloroff="[m"
 
 declare -f NECHO
 is_root() { [ "$USER" = "root" ]; }
 
+echo_simple() { echo "$@"; }
+
+echo_target() { echo "$@" >> "$ProgressTarget"; }
+
+
+if [ "${#ProgressTarget}" -gt 0 ]; then
+    NECHO=echo_target
+else
+    NECHO=echo_simple
+fi
+
+# This is useful code, that matches text between underscores
+# which can then can be manipulated.  In this case, the text
+# is surrounded by console_codes color commands.
 echo_notify()
 {
     local msg="${1}"
@@ -20,15 +36,6 @@ echo_notify()
 
     local IFS=""
     echo "$msg" | sed -E "s/${rearr[*]}/\1[31;1m\2[m\3/g" >&2
-}
-
-nc_notify()
-{
-    local msg="${1}"
-
-    echo_notify "sending $msg to $nc_address:"
-
-    echo "$msg" | nc "$nc_address" "$nc_port"
 }
 
 already_installed()
@@ -66,8 +73,13 @@ hl_install()
     if already_installed "$name"; then
         $NECHO "_${name}_ is already installed"
     else
-        $NECHO "Installing _${name}_"
+        $NECHO -n "Installing _${name}_ ..."
         sudo apt-get -y install "${name}"
+        if [ "$?" -eq 0 ]; then
+            $NECHO "   complete"
+        else
+            $NECHO "   failed"
+        fi
     fi
 }
 
@@ -92,28 +104,36 @@ run_onload_scripts()
     done
 }
 
+uninstall_timer()
+{
+    local tpath="/etc/systemd/system/timers.target.wants/firstboot.timer"
+    if [ -h "$tpath" ]; then
+        unlink "$tpath"
+    fi
+}
+
 #########################
 # Execution Begins Here #
 #########################
 
-NECHO=echo_notify
-
-if [ -f "nc_address" ]; then
-    source nc_address
-    NECHO=nc_notify
-fi
+declare -a AppsArr=(
+    emacs-nox
+    git
+    locate
+)
 
 if is_root; then
-    echo "Announcing the commencement of [32;1mload_apps[m. (stdin)"
-    echo "Announcing the commencement of [32;1mload_apps[m. (stderr)" >&2
 
-    $NECHO "_Updating packages list to get latest version of software._"
+    $NECHO "About to update software sources."
     apt-get update
-    apt-get -y upgrade
+    # apt-get -y upgrade
 
-    hl_install emacs-nox
-    hl_install locate
-    hl_install git
+    declare -i index=0
+    declare aname
+    for aname in "${AppsArr[@]}"; do
+        $NECHO -n "app $(( ++index )) of ${#AppsArr[*]} ..."
+        hl_install "$aname"
+    done
 
     # mdless is a tool for reading markdown files.  We need snapd to install it.
     # hl_install snapd
@@ -122,20 +142,23 @@ if is_root; then
     # Enable systemd-resolved.service to enable resolvectl command
     systemctl enable systemd-resolved.service
 
+    # Make an alias so invoking 'info' opens 'pinfo'
+    echo >> ~/.bashrc
+    echo "alias info='pinfo'" >> ~/.bashrc
+
+    # Modify .bashrc for emacs use
+
     # Configure for EMACS use:
     # Only change editor value if it's not already set.
     if [ -z "$EDITOR" ]; then
-        echo "Setting empty EDITOR value to 'emacs'"
-        echo "export EDITOR=emacs"
+        echo >> ~/.bashrc
+        echo "export EDITOR=emacs" >> ~/.bashrc
     fi
 
-    if grep -q -P 'INFOPATH.*emacs' ~/.bashrc; then
-        echo "[31;1mNot changing INFOPATH to find emacs info page.[m"
-    else
-        echo "Telling pinfo where to find emacs info page"
+    if ! grep -q -P 'INFOPATH.*emacs' ~/.bashrc; then
         echo >> ~/.bashrc
         echo "# Help pinfo find emacs info page" >> ~/.bashrc
-        echo "export INFOPATH=/usr/share/info/emacs" >> ~/.bashrc     # Make an alias so invoking 'info' opens 'pinfo'
+        echo "export INFOPATH=/usr/share/info/emacs" >> ~/.bashrc
     fi
 
     # Do custom scripts last, in case a script results in a reboot:
@@ -145,6 +168,9 @@ if is_root; then
         popd
     fi
 
+    $NECHO "Finished with installs."
+
+    uninstall_timer
 else
     show_usage
 fi

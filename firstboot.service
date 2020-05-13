@@ -1,11 +1,8 @@
 [Unit]
 Description=Call a script on first boot to continue installation.
-After=network.target
+After=apt-daily-upgrade.service network.target
 
 [Service]
-Type=simple
+Type=oneshot
 Environment=USER='root'
-ExecStart=/bin/bash -c /home/pi/firstboot /home/pi/fbprogress
-
-[Install]
-WantedBy=multi-user.target
+ExecStart=/home/pi/firstboot "/home/pi/fbprogress"

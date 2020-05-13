@@ -1,14 +1,77 @@
 #!/usr/bin/env bash
 
-declare pinginfo=$( ping -c 1 -q raspberrypi.local )
-declare ipregex='\(([0-9]{1,3}(\.[0-9]{1,3}){3})\)'
 declare piip
 
-if [[ "$pinginfo" =~ $ipregex ]]; then
-    piip="${BASH_REMATCH[1]}"
+get_pi_ip()
+{
+    local -n ipalias="$1"
+    local pinginfo=$( ping -c 1 -q raspberrypi.local )
+    local ipregex='\(([0-9]{1,3}(\.[0-9]{1,3}){3})\)'
+    
+    if [[ "$pinginfo" =~ $ipregex ]]; then
+        ipalias="${BASH_REMATCH[1]}"
+        return 0
+    fi
 
-    echo "Using [34;1m${piip}[0m and default user [34;1mpi[0m to ssh to a raspberry pi."
-    echo "Try the default password, [34;1mraspberry[0m first."
+    return 1
+}
 
-    ssh -l pi "${piip}"
-fi
+get_reset_command()
+{
+    local -n retval="$1"
+    local IFS=$'\n'
+    local -a lines=( $2 )
+    local line
+    for line in "${lines[@]}"; do
+        if [[ "$line" =~ [[:space:]]+(ssh-keygen.*) ]]; then
+            retval="${BASH_REMATCH[1]}"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+use_reset_command()
+{
+    local IFS=$' '
+    local -a parts=( $1 )
+    "${parts[@]}"
+}
+
+make_connection()
+{
+    local errmsg
+    local -i count=0
+    local reset_cmd
+    while true; do
+        (( ++count ))
+        echo "SSH login attempt $count"
+        if ssh -l pi "$piip" 2>/dev/null; then
+            return 0
+        else
+            errmsg=$( ssh -l pi "$piip" 2>&1 )
+            if [ $count -gt 1 ]; then
+                echo "Too many failed attempts, giving up."
+                return 1
+            elif [[ "$errmsg" =~ "REMOTE HOST IDENTIFICATION HAS CHANGED" ]]; then
+                if get_reset_command reset_cmd "$errmsg"; then
+                    use_reset_command "$reset_cmd"
+                fi
+            else
+                echo "Unexpected error message (was expecting HOST IDENTIFICATION HAS CHANGED)"
+                echo
+                echo "[32;1m$errmsg[m"
+                echo
+            fi
+        fi
+    done
+}
+
+
+get_pi_ip "piip"
+
+echo "Using [34;1m${piip}[0m and default user [34;1mpi[0m to ssh to a raspberry pi."
+echo "Try the default password, [34;1mraspberry[0m first."
+
+make_connection

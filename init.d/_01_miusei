@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+declare OLS="$PWD"
+
+echo "In [34;1mmiusei[m RASPI_HOME now equals '[33;1m$RASPI_HOME[m'"
+cd "$RASPI_HOME/Downloads"
+echo "About to clone [32;1mLCD-show[m now that we're in directory [35;1m$PWD[m"
+git clone https://github.com/goodtft/LCD-show.git
+cd "$OLS"

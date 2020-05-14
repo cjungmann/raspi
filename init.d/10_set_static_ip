@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+declare target="$RASPI_ROOT/etc/dhcpcd.conf"
+
+echo                                 >> "$target"
+echo "interface eth0"                >> "$target"
+echo "static ip_address=192.168.1.1" >> "$target"
+echo                                 >> "$target"
+

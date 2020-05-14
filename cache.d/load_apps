@@ -172,10 +172,14 @@ if is_root; then
         popd
     fi
 
+    $NECHO "Changing home file ownerships to pi:pi"
+    pushd "$HOME"
+    chown -R pi:pi *
+    popd
+
     $NECHO "Finished with installs."
 
     uninstall_timer
 else
     show_usage
 fi
-

@@ -232,17 +232,17 @@ prepare_home_directory()
     cd "$RASPI_HOME"
 
     echo "Preparing colors for 'less' output in [32;1m$PWD[m."
-    echo                           >> .bashrc
-    cat "$startingdir/less_colors" >> .bashrc
+    echo                                   >> .bashrc
+    cat "$startingdir/cache.d/less_colors" >> .bashrc
 
-    cp "$startingdir/load_apps" .
+    cp "$startingdir/cache.d/load_apps" .
     cp -s load_apps firstboot
     mkdir Downloads
 
     mkdir SetupScripts
     cd SetupScripts
-    cp "$pwd/build_firewall" .
-    cp "$pwd/miusei_screen" .
+    cp "$startingdir/cache.d/build_firewall" .
+    cp "$startingdir/cache.d/miusei_screen" .
 
     cd "$pwd"
 }
@@ -254,8 +254,8 @@ prepare_firstboot()
     local timerpath="$RASPI_ROOT/etc/systemd/system/timers.target.wants"
 
     # Copy service and timer files to expected directory
-    cp "$startingdir/firstboot.service" "$libpath/firstboot.service"
-    cp "$startingdir/firstboot.timer" "$libpath/firstboot.timer"
+    cp "$startingdir/cache.d/firstboot.service" "$libpath/firstboot.service"
+    cp "$startingdir/cache.d/firstboot.timer" "$libpath/firstboot.timer"
 
     # Install timer file link
     cd "$timerpath"

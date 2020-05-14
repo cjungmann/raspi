@@ -120,9 +120,13 @@ declare -a AppsArr=(
     emacs-nox
     git
     locate
+    pinfo
+    emacs-common-non-dfsg
 )
 
 if is_root; then
+
+    local HOME=/home/pi
 
     $NECHO "About to update software sources."
     apt-get update
@@ -143,27 +147,27 @@ if is_root; then
     systemctl enable systemd-resolved.service
 
     # Make an alias so invoking 'info' opens 'pinfo'
-    echo >> ~/.bashrc
-    echo "alias info='pinfo'" >> ~/.bashrc
+    echo                      >> "$HOME/.bashrc"
+    echo "alias info='pinfo'" >> "$HOME/.bashrc"
 
     # Modify .bashrc for emacs use
 
     # Configure for EMACS use:
     # Only change editor value if it's not already set.
     if [ -z "$EDITOR" ]; then
-        echo >> ~/.bashrc
-        echo "export EDITOR=emacs" >> ~/.bashrc
+        echo >> "$HOME/.bashrc"
+        echo "export EDITOR=emacs" >> "$HOME/.bashrc"
     fi
 
-    if ! grep -q -P 'INFOPATH.*emacs' ~/.bashrc; then
-        echo >> ~/.bashrc
-        echo "# Help pinfo find emacs info page" >> ~/.bashrc
-        echo "export INFOPATH=/usr/share/info/emacs" >> ~/.bashrc
+    if ! grep -q -P 'INFOPATH.*emacs' "$HOME/.bashrc"; then
+        echo                                         >> "$HOME/.bashrc"
+        echo "# Help pinfo find emacs info page"     >> "$HOME/.bashrc"
+        echo "export INFOPATH=/usr/share/info/emacs" >> "$HOME/.bashrc"
     fi
 
     # Do custom scripts last, in case a script results in a reboot:
-    if [ -d /home/pi/onload.d ]; then
-        pushd /home/pi/onload.d
+    if [ -d "$HOME/onload.d" ]; then
+        pushd "$HOME/onload.d"
         run_onload_scripts
         popd
     fi

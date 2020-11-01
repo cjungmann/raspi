@@ -22,5 +22,6 @@ FreeBSD on the strength of OpenBSD's project goal of running
 on any hardware.  I found [this article](https://www.sudopigeon.com/raspberry-pi/os-install-installing-openbsd-on-a-raspberry-pi-4/)
 that I may use as a guide to OpenBSD-on-RPi4.
 
-Another possibility is to use NetBSD.  This [page](https://opensource.com/article/19/3/netbsd-raspberry-pi)
-is a guide to installing NetBSD on a RaspberryPi.
+Another possibility is to use NetBSD.  This [page](https://opensource.com/article/19/3/netbsd-raspberry-pi) and
+[page](https://wiki.netbsd.org/ports/evbarm/raspberry_pi/)
+may be useful guides to installing NetBSD on a RaspberryPi. 

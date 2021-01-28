@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if ! which bash; then
+   pkg install bash
+fi
+
+./bsd_setup_bash

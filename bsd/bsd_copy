@@ -1,0 +1,355 @@
+#!/usr/bin/env bash
+
+is_root() { [ "$USER" = "root" ]; }
+
+declare -i save_user=0
+
+declare IPS=$'\n'
+declare -a user_info=(
+    "hostname;Host Name"
+    "username;User Name"
+    "userfullname;Full Name"
+    "userpw;Password"
+    "usershell;Default shell (sh, bash, etc)"
+)
+
+get_user_info()
+{
+    local setraw
+    local -a setarr
+    local -a extra_args
+    local prompt vname IFS
+    IFS=$';'
+    for setraw in "${user_info[@]}"; do
+        extra_args=()
+
+        setarr=( $setraw )
+
+        # Detect asterisk prefix signalling a password
+        vname="${setarr[0]}"
+        if [ "${vname:0:1}" == '*' ]; then
+            extra_args=( -s )
+            vname="${vname:1}"
+        fi
+
+        read_args=( "${read_args[@]}" -s )
+        if [ "${#setarr[@]}" -gt 1 ]; then
+            prompt="${setarr[1]}: "
+        fi
+        read "${extra_args[@]}" -p "$prompt"
+        printf -v "$vname" "%s" "$REPLY"
+
+        if [ "${#extra_args[@]}" -gt 0 ]; then
+            echo
+        fi
+    done
+}
+
+show_user_info()
+{
+    local setraw
+    local -a setarr
+    local prompt vname IFS
+    local silent_write
+    IFS=$';'
+    for setraw in "${user_info[@]}"; do
+        silent_write=0
+        setarr=( $setraw )
+        # Detect asterisk prefix signalling a password
+        vname="${setarr[0]}"
+        if [ "${vname:0:1}" == '*' ]; then
+            silent_write=1
+            vname="${vname:1}"
+        fi
+        eval "local tname=\$$vname"
+        if [ "$silent_write" -eq 0 ]; then
+            printf "$vname is %s\n" "$tname"
+        else
+            printf "not showing $vname\n"
+        fi
+    done
+}
+
+# Waits for and returns single keypress, even if it is
+# represented by multiple characters.
+get_keypress()
+{
+    # IFS characters will be invisible to 'read', so:
+    local IFS=''
+
+    # Array to collect chars in case of multi-char keypress
+    local -a chars=( )
+    
+    # Wait for a keypress (-n 1), save to array
+    local keychar
+    read -n 1 -s  keychar
+    chars=( "$keychar" )
+
+    # Collect additional characters if available, especially for escape characters
+    while read -t 0; do
+        read -n 1 keychar
+        chars=( "${chars[@]}" "$keychar" )
+    done
+
+    # empty IFS so array is joined without delimiters
+    echo "${chars[*]}"
+}
+
+# Returns TRUE (0) if the needle character is in the haystack string.
+str_contains_chr()
+{
+    local haystack="$1"
+    local needle="$2"
+    [ "${#needle}" -eq 1 ] && [ "${haystack//[^$needle]/}" ]
+}
+
+
+# Keep getting keystrokes until matching a character in the haystack.
+# If a default parameter is included, typing ENTER will return the
+# default character.
+await_letter()
+{
+    local haystack="$1"
+    local default="$2"
+
+    local keystroke=$''
+    while ! str_contains_chr "$haystack" "$keystroke"; do
+        keystroke=$( get_keypress )
+        if [ "$default" ] && [ "${#keystroke}" -eq 0 ]; then
+           keystroke="$default"
+           break
+        elif [ "${#keystroke}" -gt 1 ]; then
+            keystroke=$''
+        fi
+    done
+
+    echo "$keystroke"
+}
+
+get_mount_from_line()
+{
+    local IFS=$' '
+    local -a parts=( $1 )
+    if [ "${#parts[0]}" -gt 2 ]; then
+        echo "${parts[2]}"
+        return 0
+    else
+        return 1
+    fi
+}
+
+unmount_device()
+{
+    local device="$1"
+    local IFS=$'\n'
+    local mline
+    local mpoint
+    local -a mounts=( $( mount | grep "$device" ) )
+    echo "There are ${#mounts[@]} mounts of $device."
+
+    for mline in "${mounts[@]}"; do
+        if mpoint=$( get_mount_from_line $mline ); then
+            echo "Unmounting $mpoint"
+            umount "$mpoint"
+            if [ $? -ne 0 ]; then
+                echo "Error: unable to unmount $mpoint."
+                echo "Mount points with spaces will confuse the script."
+            fi
+        fi
+    done
+}
+
+
+prepare_user_info()
+{
+    echo -n "Prepare a new BSD user account (Y/n)?"
+    local selection=$( await_letter "yYnN" "y" )
+    echo
+    if [ "${selection,,?}" == 'y' ]; then
+        local letter='r'
+        while [ "$letter" == 'r' ]; do
+            get_user_info
+            echo
+            echo "Confirm these values:"
+            show_user_info
+
+            echo -n "Prepare to create user on new system (yes/No/retry )? "
+            selection=$( await_letter "yYnNrR" "n" )
+            letter="${selection,,?}"
+            if [ "$letter" == 'y' ]; then
+                local -n su="save_user"
+                su=1
+            fi
+        done
+    fi
+
+    # Terminate incomplete line
+    echo
+}
+
+create_adduser_script()
+{
+    local target="$1"
+    echo "#!/usr/bin/env bash"
+    echo
+
+    touch "$target"
+    chmod a+x "$target"
+
+    local -a params=()
+    if [ "$hostname" ]; then
+        echo "sed -i 's/hostname*/hostname=${hostname}/' /etc/rc.conf" >> "$target"
+    fi
+
+    if [ "$username" ]; then
+        local -a fmat=(
+            "$username"
+            ""          # uid
+            ""          # gid
+            ""          # class
+            ""          # change (password aging)
+            ""          # expire
+            "$userfullname"
+            ""          # home directory
+            "$usershell"
+            "$userpw"
+        )
+        echo                                                 >> "$target"
+        echo "declare userargs=${fmat[*]}"                   >> "$target"
+
+        echo                                                 >> "$target"
+        echo -n "echo \"\${userargs}\" | adduser -g wheel"   >> "$target"
+        if [ "$usershell" ]; then
+            echo -n " -s $usershell"                         >> "$target"
+        fi
+
+        echo " -f -"                                         >> "$target"
+    fi
+}
+
+
+
+download_image()
+{
+    wget https://download.freebsd.org/ftp/releases/arm64/aarch64/ISO-IMAGES/12.2/FreeBSD-12.2-RELEASE-arm64-aarch64-RPI3.img.xz
+
+    if [ $? -eq 0 ]; then
+        local image
+        if image=$( ls FreeBSD*.xz 2>/dev/null ); then
+            unxz "$image"
+            if ls FreeBSD.*img; then 
+                return 0
+            fi
+        fi
+    fi
+
+    return 1
+}
+
+disk_dup()
+{
+    local target="$1"
+    local source="$2"
+    
+    local -a args=(
+        bs=10M
+        if="$source"
+        of="$target"
+        status=progress
+        conv=fsync
+    )
+
+    echo "About to wipe $target"
+    wipefs -a "$target"
+    if [ $? -eq 0 ]; then
+        dd "${args[@]}"
+    else
+        return 1
+    fi
+}
+
+safe_umount()
+{
+    local -i lcount=99
+    local -a lsparts
+
+    if [ $# -gt 0 ]; then
+        local target="$1"
+        umount "$target"
+
+        while [ "$lcount" -gt 2 ]; do
+            echo "Waiting for umount"
+            lsparts=( $( ls -ld "$target" ) )
+            lcount="${lsparts[1]}"
+        done
+    fi
+}
+
+copy_scripts()
+{
+    local target="${1}1"
+    local -i count=0
+
+    while ! [ -e "$target" ]; do
+        if [ $(( ++count )) -gt 10 ]; then
+            break
+        else
+            sleep 1
+        fi
+    done
+
+    echo "Looped $count times while waiting for $target."
+
+    if [ -e "$target" ]; then
+        echo "Copying setup scripts"
+        mkdir fatdir
+        mount "$target" fatdir
+
+        cp bsd_setup* fatdir
+        if [ "$save_user" -eq 1 ]; then 
+            create_adduser_script "add_user"
+            cp "add_user" fatdir
+        fi
+
+        save_umount fatdir
+        rmdir fardir
+
+        return 0
+    else
+        echo "Unable to copy scripts: could not find $target"
+        return 1
+    fi
+}
+
+
+do_the_deed()
+{
+    local target="$1"
+    local image
+
+    unmount_device "$target"
+
+    prepare_user_info
+
+    if ! image=$( ls FreeBSD*.img 2>/dev/null ); then
+        echo "Can't find a FreeBSD image"
+        exit 1
+        if ! download_image; then
+            exit 1
+        fi
+    fi
+
+    if image=$( ls FreeBSD*.img 2>/dev/null ) && disk_dup "$target" "$image"; then
+        copy_scripts "$target"
+        unmount_device "$target"
+    fi
+}
+
+
+if [ $# -lt 1 ]; then
+   echo Please enter a device target 
+elif is_root; then
+    do_the_deed "$1"
+else
+    echo "You must be root to run"
+fi

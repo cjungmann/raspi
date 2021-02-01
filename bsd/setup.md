@@ -1,5 +1,16 @@
 # Setting Up Raspberry Pi with FreeBSD
 
+I'd like to be able to do a headless setup on a
+Raspberry Pi.  This document shows how to copy an OS image,
+find and log into, and install fundamental programs on a
+Raspberry Pi 3.  I haven't been able to get a version 4 to
+boot.
+
+I found [this](https://minnie.tuhs.org/Blog/2019_06_27_FreeBSD_NAS.html)
+very informative page.  I'm not preparing a NAS, but this
+individual has documented many configurations in support
+of NAS that may be useful to a general user.
+
 ## Prepare the Raspberry Pi with an new FreeBSD image:
 
 - Download the compressed img.xz file

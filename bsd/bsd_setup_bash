@@ -5,72 +5,6 @@ declare userfullname
 declare userpw
 declare usershell
 
-
-# declare IPS=$'\n'
-# declare -a user_info=(
-#     "username;User Name"
-#     "userfullname;Full Name"
-#     "userpw;Password"
-#     "usershell;Default shell (sh, bash, etc)"
-# )
-
-# get_user_info()
-# {
-#     local setraw
-#     local -a setarr
-#     local -a extra_args
-#     local prompt vname IFS
-#     IFS=$';'
-#     for setraw in "${user_info[@]}"; do
-#         extra_args=()
-
-#         setarr=( $setraw )
-
-#         # Detect asterisk prefix signalling a password
-#         vname="${setarr[0]}"
-#         if [ "${vname:0:1}" == '*' ]; then
-#             extra_args=( -s )
-#             vname="${vname:1}"
-#         fi
-
-#         read_args=( "${read_args[@]}" -s )
-#         if [ "${#setarr[@]}" -gt 1 ]; then
-#             prompt="${setarr[1]}: "
-#         fi
-#         read "${extra_args[@]}" -p "$prompt"
-#         printf -v "$vname" "%s" "$REPLY"
-
-#         if [ "${#extra_args[@]}" -gt 0 ]; then
-#             echo
-#         fi
-#     done
-# }
-
-# show_user_info()
-# {
-#     local setraw
-#     local -a setarr
-#     local prompt vname IFS
-#     local silent_write
-#     IFS=$';'
-#     for setraw in "${user_info[@]}"; do
-#         silent_write=0
-#         setarr=( $setraw )
-#         # Detect asterisk prefix signalling a password
-#         vname="${setarr[0]}"
-#         if [ "${vname:0:1}" == '*' ]; then
-#             silent_write=1
-#             vname="${vname:1}"
-#         fi
-#         eval "local tname=\$$vname"
-#         if [ "$silent_write" -eq 0 ]; then
-#             printf "$vname is %s\n" "$tname"
-#         else
-#             printf "not showing $vname\n"
-#         fi
-#     done
-# }
-
 load_app()
 {
     if which "$1"; then
@@ -171,60 +105,11 @@ load_development_stack()
     load_app emacs-common-non-dfsg
 }
 
-# add_user_confirmed()
-# {
-#     local -a fmat=(
-#         "$username"
-#         ""          # uid
-#         ""          # gid
-#         ""          # class
-#         ""          # change (password aging)
-#         ""          # expire
-#         "$userfullname"
-#         ""          # home directory
-#         "$usershell"
-#         "$userpw"
-#         )
-#     local -a args=( -g wheel )
-#     if [ "$usershell" ]; then
-#         args=( "${args[@]}" -s "$usershell" )
-#     fi
-
-#     local IFS=$':'
-#     adduser "${args[@]}" -f "${fmat[*]}"
-# }
-
-# add_wheel_user()
-# {
-#     echo "[34;1madd_wheel_user()[m"
-#     get_user_info
-
-#     echo
-#     echo "Confirm the following information:"
-#     show_user_info
-#     read -p "Continue using this information (y/n)?"
-#     if [ $? -eq 0 ] && [ "$REPLY" == 'y' ]; then
-#         if ! add_user_confirmed; then
-#             exit 1
-#         fi
-#     fi
-# }
-
-# set_hostname()
-# {
-#     echo "[34;1mset_hostname()[m"
-#     if [ $# -gt 0 ]; then
-#         local new_host_name="$1"
-#         sed -i 's/hostname=.*$/hostname=\"$new_host_name\"/' /etc/rc.conf
-#     fi
-# }
-
-# add_wheel_user             
-# set_hostname bsdpi         # Change hostname from `generic`, the default, to `bsdpi`
-                           # Alter for another hostname
 
 if [ -x "$add_user" ]; then
     "$add_user"
+    echo "Removing user script to protect the password."
+    rm "$add_user"
 fi
 
 prepare_pkg                # first use of pkg should update and upgrade

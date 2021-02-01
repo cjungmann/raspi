@@ -17,6 +17,31 @@ elsewhere.
      unxz "${fname}"
      ~~~
 
+1. Execute *bsd_copy* to prepare the SD card
+   - Determine the target SD card in the `/dev` directory.
+   - execute *bsd_copy* as root, with the SD target:  
+     `sudo ./bsd_copy /dev/sdx`
+   - You can enter a host name and an initial **wheel**
+     user in order to have root privileges over an SSH
+     connection.
+
+1. Initialize the OS on the Raspberry Pi
+   - Unmount the MSDOSBOOT device, waiting for the write warning
+     to disappear.
+   - Mount SD card in the Raspberry Pi device and power up.
+   - Login as root with password root (you'll need to change this).
+   - cd to `/boot/msdos`
+   - run `bsd_setup`.  Don't use **sudo** because it's not yet
+     installed and also because, since you're logged in as *root*,
+     you wouldn't need **sudo** anyway.
+   - Do some errands.  The setup takes a **long** time.
+
+
+The following steps are for manually preparing the SD card
+and setup upon first boot.  They remain as a reference, but
+the best practice is to use **bsd_copy** and **bsd_setup**.
+     
+
 1. Copy OS image to SD
    - Identify SD card in `/dev` directory
    - Fully clean the SD card with `wipefs -a /dev/sdx`
@@ -31,7 +56,8 @@ elsewhere.
 
      ~~~sh
      declare fname=$( ls FreeBSD*.img )
-     sudo wipefs -a devtarget
+     if ! [ $devtarget ]; then echo "You forget to set devtarget.  Press ^C to interrupt."; fi
+     sudo wipefs -a $devtarget
      sudo dd bs=4M if=${fname} of=$devtarget status=progress conv=fsync
      ~~~
 
@@ -42,14 +68,20 @@ elsewhere.
      sudo mount /dev/sdb1 fatdir
      sudo cp bsd_setup* fatdir
      sudo umount fatdir
-     rm -rf fatdir
+     rmdir fatdir
      ~~~
 
 1. Initial FreeBSD boot
    - Install SD card in Raspberry Pi and power up.
    - Login as **root**, password **root**.
    - Change to /boot/msdos
-   - Run `bsd_setup.sh`
-     - This will take a **long** time, especially when
-       installing python.
+   - Run `bsd_setup`
+     - **bsd_setup** bootstraps *pkg*, installs bash, then calls
+       **bsd_setup_bash**, where all the real work is done.
+     - Examine the end of **bsd_setup_bash**.  Comment out
+       statements that do things you don't want done.
+     - This may take a **long** time, especially, it seems,
+       when extracting large compressed files.
+       
+
    

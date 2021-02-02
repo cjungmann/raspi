@@ -1,24 +1,8 @@
 #!/bin/sh
 
-set_pkg_assume()
-{
-    local subs
-    if [ "$1" == "yes" ]; then
-        subs='s/[# ]\?ASSUME_ALWAYS_YES.*$/ASSUME_ALWAYS_YES = true;/'
-    else
-        subs='s/ASSUME_ALWAYS_YES.*/ASSUME_ALWAYS_YES = false;/'
-    fi
-
-    sed -i '' "$subs" /usr/local/etc/pkg.conf
-}
-
 export ASSUME_ALWAYS_YES=yes;
+
 pkg bootstrap
-
-# set_pkg_assume yes
-
-pkg update
-pkg upgrade
 
 if ! which bash; then
    pkg install bash
@@ -26,4 +10,3 @@ fi
 
 ./bsd_setup_bash
 
-# set_pkg_assume no

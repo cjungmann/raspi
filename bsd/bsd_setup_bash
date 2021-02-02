@@ -29,12 +29,12 @@ add_if_missing()
 prepare_nsswitch_conf()
 {
     local -a args=(
-        -i
+        -i ''
         's/hosts.*$/hosts: files mdns4_minimal [NOTFOUND=return] dns/'
         /etc/nsswitch.conf
         )
 
-    sed "${args[@]]}"
+    sed "${args[@]}"
 }
 
 prepare_avahi_daemon_conf()
@@ -85,16 +85,9 @@ enable_sudo()
 {
     echo "[34;1menable_sudo()[m"
     load_app sudo
-    sed -i 's/# %wheel ALL=\(ALL\) ALL/%wheel ALL=(ALL) ALL/' /usr/local/etc/sudoers
+    sed -i '' 's/# %wheel ALL=\(ALL\) ALL/%wheel ALL=(ALL) ALL/' /usr/local/etc/sudoers
 }
 
-
-prepare_pkg()
-{
-    pkg update
-    pkg upgrade
-}
-    
 
 load_development_stack()
 {
@@ -102,21 +95,21 @@ load_development_stack()
     load_app locate
     load_app valgrind
     load_app texinfo
-    load_app emacs-common-non-dfsg
+    load_app git
+    # load_app emacs-common-non-dfsg
 }
 
 
-if [ -x "$add_user" ]; then
-    "$add_user"
-    echo "Removing user script to protect the password."
-    rm "$add_user"
-fi
-
-prepare_pkg                # first use of pkg should update and upgrade
 enable_sudo                # install sudo and update sudoer file
 enable_ssh                 # ssh not enabled by default on BSD
-
 enable_hostname_ping       # prepare to recognize device using local DNS
+
+if [ -x "add_user" ]; then
+    ./add_user
+    echo "[32;1mYou should be able to ssh as root now.[m"
+    echo "Removing user script to protect the password."
+    rm add_user
+fi
 
 load_development_stack     # installs locate, emacs-nox, valgrind, texinfo, emacs-common-non-dfsg
 

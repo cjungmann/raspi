@@ -205,7 +205,7 @@ create_adduser_script()
         echo "sed -i '' 's/hostname.*/hostname=\"${hostname}\"/' /etc/rc.conf" >> "$target"
         echo "log_result $? \"hostname update\" \"Success\" \"Failed\""        >> "$target"
         # Use the new hostname immediately:
-        echo "hostname"                                                        >> "$target"
+        echo "hostname ${hostname}"                                            >> "$target"
         
         echo                                                                   >> "$target"
     fi

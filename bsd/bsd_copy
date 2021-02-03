@@ -318,8 +318,9 @@ copy_scripts()
 
         cp bsd_setup* fatdir
         if [ "$save_user" -eq 1 ]; then 
-            create_adduser_script "add_user"
-            cp "add_user" fatdir
+            create_adduser_script add_user
+            cp add_user fatdir
+            rm add_user
         fi
 
         safe_umount fatdir

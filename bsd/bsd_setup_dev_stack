@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+source "bsd_setup_utils"
+
+load_app emacs-nox
+load_app locate
+load_app valgrind
+load_app texinfo
+load_app git

@@ -9,8 +9,8 @@ log_result()
 
         local -i result="$1"
         local msg_gen="$2"
-        local msg_success="$3"
-        local msg_fail="$4"
+        local msg_success="${3:-succeeded}"
+        local msg_fail="${4:-failed}"
 
         echo -n "$msg_gen: "            >> "$SETUP_LOG"
 
@@ -25,3 +25,14 @@ log_result()
         read -N1 -t60 -p "Press any key to contine."
     fi
 }
+
+load_app()
+{
+    if which "$1"; then
+        echo "$1 is already installed"
+    else
+        echo "installing $1"
+        pkg install "$1"
+    fi
+}
+

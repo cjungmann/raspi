@@ -7,17 +7,8 @@ declare userfullname
 declare userpw
 declare usershell
 
-load_app()
-{
-    if which "$1"; then
-        echo "$1 is already installed"
-    else
-        echo "installing $1"
-        pkg install "$1"
-    fi
-}
 
-add_if_missing()
+add_line_if_missing()
 {
     local target="$1"
     local IFS=$'='
@@ -37,7 +28,7 @@ prepare_nsswitch_conf()
         )
 
     sed "${args[@]}"
-    log_result $? "sed to update nsswitch.conf" "success" "failed"
+    log_result $? "sed to update nsswitch.conf"
 }
 
 prepare_avahi_daemon_conf()
@@ -65,9 +56,9 @@ enable_hostname_ping()
     pkg install -y nss_mdns
     pkg install -y avahi-app
 
-    add_if_missing /etc/rc.conf avahi_daemon_enable="YES"
-    add_if_missing /etc/rc.conf dbus_enable="YES"
-    add_if_missing /etc/rc.conf avahi_dnsconfd_enable="YES"
+    add_line_if_missing /etc/rc.conf avahi_daemon_enable="YES"
+    add_line_if_missing /etc/rc.conf dbus_enable="YES"
+    add_line_if_missing /etc/rc.conf avahi_dnsconfd_enable="YES"
 
     prepare_nsswitch_conf
     prepare_avahi_daemon_conf
@@ -82,8 +73,6 @@ enable_ssh()
     echo "[34;1menable_ssh()[m"
     if ! grep sshd_enable /etc/rc.conf; then
         echo sshd_enable=\"YES\" >> /etc/rc.conf
-    else
-        echo "Did not find sshd_enable"
     fi
 }
 
@@ -92,18 +81,7 @@ enable_sudo()
     echo "[34;1menable_sudo()[m"
     load_app sudo
     sed -i '' 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /usr/local/etc/sudoers
-    log_result $? "sed to update sudoers" "success" "failed"
-}
-
-
-load_development_stack()
-{
-    load_app emacs-nox
-    load_app locate
-    load_app valgrind
-    load_app texinfo
-    load_app git
-    # load_app emacs-common-non-dfsg
+    log_result $? "sed to update sudoers"
 }
 
 
@@ -112,16 +90,15 @@ date > "$SETUP_LOG"
 
 enable_sudo                # install sudo and update sudoer file
 enable_ssh                 # ssh not enabled by default on BSD
-enable_hostname_ping       # prepare to recognize device using local DNS
 
 if [ -x "add_user" ]; then
     ./add_user
-    echo "[32;1mYou should be able to ssh as root now.[m"
-    echo "Removing user script to protect the password."
     rm add_user
-else
-    echo "[32;1mFailed to find add_user script![m"
 fi
 
-# load_development_stack     # installs locate, emacs-nox, valgrind, texinfo, emacs-common-non-dfsg
+enable_hostname_ping       # prepare to recognize device using local DNS
+
+# uncomment to run automatically, otherwise you can
+# run it at your first login:
+# bsd_setup_dev_stack      
 

@@ -2,8 +2,72 @@
 
 source "bsd_setup_utils"
 
-load_app emacs-nox
-load_app locate
-load_app valgrind
-load_app texinfo
-load_app git
+export ASSUME_ALWAYS_YES=yes;
+
+load_valgrind()
+{
+    if ! which valgrind; then
+        local OPWD="$PWD"
+        cd /tmp
+        git clone https://github.com/paulfloyd/freebsd_valgrind.git
+        cd freebsd_valgrind
+        sh autogen.sh
+        gmake
+        gmake install
+        cd ..
+        rm -rf freebsd_valgrind
+        cd "$OPWD"
+    fi
+}
+
+load_emacs_info()
+{
+    local infopath=$( info -w emacs )
+    if [[ "$infopath" =~ "emacs" ]]; then
+       echo "EMACS info already installed"
+    else
+       local OPWD="$PWD"
+       cd /home/chuck
+
+       if ! [ -d "emacs-27.1" ]; then
+           wget --no-check-certificate https://ftp.gnu.org/gnu/emacs/emacs-27.1.tar.xz
+           unxz emacs-27.1.tar.xz
+           tar -xf emacs-27.1.tar
+       fi
+
+       makeinfo -v --no-split -o emacs.info emacs-27.1/doc/emacs/emacs.texi
+       if [ $? -eq 0 ]; then
+           local infodir=$( get_info_dir )
+
+           gzip -c emacs.info > "${infodir}/emacs.info.gz"
+           install-info --add-once "${infodir}/emacs.info.gz" "${infodir}/dir"
+       fi
+
+       # clean up
+       rm -rf emacs-27.1
+       rm -f emacs-27.1.tar
+       rm -f emacs.info
+       
+       cd "$OPWD"
+    fi
+}
+
+if is_root; then
+    load_app git
+    load_app wget
+    load_app emacs-nox
+    load_app texinfo
+
+    load_app locate
+    /usr/libexec/locate.updatedb
+
+    load_valgrind
+    load_emacs_info
+else
+    echo "You must be root to install programs."
+fi
+
+
+
+
+

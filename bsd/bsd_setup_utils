@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+declare SETUP_LOG="setup.log"
+
+log_result()
+{
+    echo "[32;1mAbout to save info to $SETUP_LOG[n"
+    if [ -e "$SETUP_LOG" ]; then
+
+        local -i result="$1"
+        local msg_gen="$2"
+        local msg_success="$3"
+        local msg_fail="$4"
+
+        echo -n "$msg_gen: "            >> "$SETUP_LOG"
+
+        if [ "$result" -eq 0 ]; then
+            echo "$msg_success"         >> "$SETUP_LOG"
+        else
+            echo "$msg_fail"            >> "$SETUP_LOG"
+            read -N1 -t60 -p "Press any key to contine."
+        fi
+    else
+        echo "Environment variable SETUP_LOG is not set."
+        read -N1 -t60 -p "Press any key to contine."
+    fi
+}

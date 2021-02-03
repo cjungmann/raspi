@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+is_root() { [ "$USER" == "root" ]; }
+
 declare SETUP_LOG="setup.log"
 
 log_result()
@@ -24,6 +26,16 @@ log_result()
         echo "Environment variable SETUP_LOG is not set."
         read -N1 -t60 -p "Press any key to contine."
     fi
+}
+
+get_info_dir()
+{
+    local begin=$( info -w info )
+    if [ $? -eq 0 ]; then
+        echo "${begin%/*}"
+        return 0
+    fi
+    return 1
 }
 
 load_app()

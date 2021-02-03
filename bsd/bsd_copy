@@ -196,12 +196,17 @@ create_adduser_script()
     touch "$target"
     chmod a+x "$target"
 
-    echo "#!/usr/bin/env bash" >> "$target"
+    echo "#!/usr/bin/env bash"            >> "$target"
+    echo "source bsd_setup_utils"         >> "$target"
     echo
 
     if [ "$hostname" ]; then
         echo "echo \"changing hostname to ${hostname}\""                       >> "$target"
         echo "sed -i '' 's/hostname.*/hostname=\"${hostname}\"/' /etc/rc.conf" >> "$target"
+        echo "log_result $? \"hostname update\" \"Success\" \"Failed\""        >> "$target"
+        # Use the new hostname immediately:
+        echo "hostname"                                                        >> "$target"
+        
         echo                                                                   >> "$target"
     fi
 
@@ -229,6 +234,7 @@ create_adduser_script()
         fi
 
         echo " -f -"                                      >> "$target"
+        echo "log_result $? \"adduser for ${username}\" \"Success\" \"Failed\""        >> "$target"
     fi
 }
 

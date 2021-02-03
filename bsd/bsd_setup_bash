@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source bsd_setup_utils
+
 declare username
 declare userfullname
 declare userpw
@@ -35,6 +37,7 @@ prepare_nsswitch_conf()
         )
 
     sed "${args[@]}"
+    log_result $? "sed to update nsswitch.conf" "success" "failed"
 }
 
 prepare_avahi_daemon_conf()
@@ -52,6 +55,8 @@ prepare_avahi_daemon_conf()
         echo "[wide-area]"      >> "$target"
         echo "enable-wide-area" >> "$target"
     fi
+
+    cd "$PrevWD"
 }
 
 enable_hostname_ping()
@@ -67,6 +72,7 @@ enable_hostname_ping()
     prepare_nsswitch_conf
     prepare_avahi_daemon_conf
 
+    service dbus start
     service avahi-daemon start
 }
 
@@ -85,7 +91,8 @@ enable_sudo()
 {
     echo "[34;1menable_sudo()[m"
     load_app sudo
-    sed -i '' 's/# %wheel ALL=\(ALL\) ALL/%wheel ALL=(ALL) ALL/' /usr/local/etc/sudoers
+    sed -i '' 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /usr/local/etc/sudoers
+    log_result $? "sed to update sudoers" "success" "failed"
 }
 
 
@@ -100,6 +107,9 @@ load_development_stack()
 }
 
 
+# Initialize setup log with the date
+date > "$SETUP_LOG"
+
 enable_sudo                # install sudo and update sudoer file
 enable_ssh                 # ssh not enabled by default on BSD
 enable_hostname_ping       # prepare to recognize device using local DNS
@@ -109,7 +119,9 @@ if [ -x "add_user" ]; then
     echo "[32;1mYou should be able to ssh as root now.[m"
     echo "Removing user script to protect the password."
     rm add_user
+else
+    echo "[32;1mFailed to find add_user script![m"
 fi
 
-load_development_stack     # installs locate, emacs-nox, valgrind, texinfo, emacs-common-non-dfsg
+# load_development_stack     # installs locate, emacs-nox, valgrind, texinfo, emacs-common-non-dfsg
 

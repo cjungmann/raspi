@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+sudo apt-get -y install mariadb-server
+# install apache
+
+mkdir src
+cd src
+git clone https://github.com/cjungmann/SchemaServer.git
+git clone https://github.com/cjungmann/schemafw.git

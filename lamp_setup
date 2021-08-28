@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+define C_GREEN "[32;1m"
+
+is_root() { [ "$USER" == "root" ]; }
+
+
+install_apache()
+{
+    echo "${C_GREEN}Installing apache[m"
+    apt-get install -y apache2-bin
+    ufw allow in "Apache"
+}
+
+install_mariadb()
+{
+    echo "${C_GREEN}Installing maria db[m"
+    apt-get install -y mariadb-server libmariadb-dev
+    cp -s /usr/bin/mariadb_config /usr/bin/mysql_config
+    ln -s /usr/include/mariadb /usr/include/mysql
+
+    echo "${C_GREEN}Login with 'root' with 'sudo mysql -u root'[m"
+    echo "${C_GREEN}You will have to create regular users.[m"
+    echo "${C_GREEN}You may want to create a default user in .my.cnf.[m"
+}
+
+install_php()
+{
+    echo "${C_GREEN}Installing php[m"
+    apt-get install -y php libapache2-mod-php php-mysql
+}
+
+install_fastcgi()
+{
+    echo "${C_GREEN}Installing FastCGI[m"
+    apt-get install -y libfcgi-dev
+}
+
+install_texinfo()
+{
+    echo "${C_GREEN}Installing texinfo utilities, including makeinfo[m"
+    apt-get install -y texinfo
+}
+
+install_git()
+{
+    echo "${C_GREEN}Installing git environment[m"
+    apt-get install -y git
+}
+
+
+if ! is_root; then 
+    echo "You must be root to run this script."
+else
+    sudo apt-get update -y
+    sudo apt-get upgrade -y
+ 
+    if ! which apache2; then
+        install_apache
+    fi
+    
+    if ! which mysql; then
+        install_mariadb
+    fi
+    
+    if ! which php; then
+        install_php
+    fi
+
+    if ! which makeinfo; then
+        install_texinfo
+    fi
+
+    if ! which git; then
+        install_git
+    fi
+       
+fi

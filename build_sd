@@ -7,12 +7,6 @@ show_usage()
     echo
     echo "build_sd [name of device]"
     echo "example: [32;1m./build_sd sda[m"
-    echo
-    echo "If you want to enable nc communication, add an extra parameter,"
-    echo "the socket port, from 1025 to 65535.  It's up to you to pick an"
-    echo "appropriate port number."
-    echo
-    echo "example: [32;1m./build_sd sda 12345[m."
 }
 
 is_root() { [ "$USER" = "root" ]; }
@@ -102,17 +96,13 @@ confirm_Target()
         exit 1
     fi
 
-    declare -a lines
-    declare -i count_disk=0
-    local IFS=$'\n'
-    local regex="$Target[[:space:]]\+.*disk"
-    lines=( $( lsblk --list | grep $regex - ) )
-    if [ $? -eq 0 ]; then
-        count_disk="${#lines[@]}"
+    echo "Attempting to confirm \"/dev/$Target\""
+    if [ -b "/dev/$Target" ]; then
+        return 0
+    else
+        echo "The directory, $Target, is not available"
+        return 1;
     fi
-
-    # return value from final test:
-    [ "$count_disk" -eq 1 ]
 }
 
 get_image_filename()
@@ -203,6 +193,7 @@ configure_boot_partition()
 {
     if is_root; then
         cp wpa_supplicant.conf mpoint
+        cp lamp_setup mpoint
         touch mpoint/ssh
         echo "[33;1mDo not forget to set SSH with [34;1mraspi-config[33;1m upon first boot.[m"
     else
@@ -275,6 +266,7 @@ perform_custom_settings()
     local script
     for script in "${scripts[@]}"; do
         if [ -x "$script" ] && ! [ "${script:0:1}" = '*' ]; then
+            echo "Custom script setting \"$script\""
             ( export RASPI_ROOT="$RASPI_ROOT" RASPI_HOME="$RASPI_HOME"; "./$script" )
         fi
     done
@@ -323,8 +315,26 @@ enable_ssh()
     cd "$curdir"
 }
 
-
 configure_sd_card()
+{
+   if ! [ -d mpoint ]; then
+        mkdir mpoint
+    fi
+
+    if is_root; then
+        # Work with boot partition:
+        echo "[33;1mMounting the boot partition /dev/${Target}1 to mpoint.[m"
+        mount /dev/"$Target"1 mpoint
+        if [ "$?" -eq 0 ]; then
+            configure_boot_partition
+            sync
+            umount_wait mpoint
+        fi
+    fi
+ }
+
+
+configure_sd_card_long()
 {
     local RASPI_ROOT RASPI_HOME
     

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-define C_GREEN "[32;1m"
+declare C_GREEN "[32;1m"
 
 is_root() { [ "$USER" == "root" ]; }
 
@@ -62,7 +62,7 @@ else
     if ! which mysql; then
         install_mariadb
     fi
-    
+
     if ! which php; then
         install_php
     fi

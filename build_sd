@@ -194,6 +194,7 @@ configure_boot_partition()
     if is_root; then
         cp wpa_supplicant.conf mpoint
         cp lamp_setup mpoint
+        cp dev_setup mpoint
         touch mpoint/ssh
         echo "[33;1mDo not forget to set SSH with [34;1mraspi-config[33;1m upon first boot.[m"
     else

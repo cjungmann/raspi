@@ -4,7 +4,7 @@ is_root() { [ "$USER" == "root" ]; }
 
 if is_root; then
     apt-get update
-    apt-get install -y git emacs-nox
+    apt-get install -y git emacs-nox texinfo
 else
     echo "You must be root to run this script (use \"sudo\")."
 fi

@@ -1,8 +1,33 @@
 #!/usr/bin/env bash
 
-declare C_GREEN "[32;1m"
+declare C_GREEN="[32;1m"
 
 is_root() { [ "$USER" == "root" ]; }
+
+# Waits for and returns single keypress, even if it is
+# represented by multiple characters.
+get_keypress()
+{
+    # IFS characters will be invisible to 'read', so:
+    local IFS=''
+
+    # Array to collect chars in case of multi-char keypress
+    local -a chars=( )
+    
+    # Wait for a keypress (-n 1), save to array
+    local keychar
+    read -n 1 -s keychar
+    chars=( "$keychar" )
+
+    # Collect additional characters if available, especially for escape characters
+    while read -t 0; do
+        read -n 1 keychar
+        chars=( "${chars[@]}" "$keychar" )
+    done
+
+    # empty IFS so array is joined without delimiters
+    echo "${chars[*]}"
+}
 
 
 install_apache()
@@ -10,6 +35,40 @@ install_apache()
     echo "${C_GREEN}Installing apache[m"
     apt-get install -y apache2-bin
     ufw allow in "Apache"
+}
+
+set_mariadb_root_password()
+{
+    local pword1=1 pword2=2 respkey
+    until [ "${pword1}" == "${pword2}" ]; do
+        pword1=""
+        pword2=""
+        echo -n "Enter a MySQL root password "
+        read -s pword1
+        echo
+        echo -n "Reenter the password "
+        read -s pword2
+        echo
+
+        if [ "${pword1}" ] && [ "${pword1}" != "${pword2}" ]; then
+            echo "The passwords do not match."
+            echo -n "Press ENTER to try again, \"S\" to skip setting the password."
+            while [ 1 -eq 1 ]; do
+                respkey=$( get_keypress )
+                if [ "${#respkey}" -eq 0 ]; then
+                    break;
+                elif [ "${respkey}" == "s" ] || [ "${respkey}" == "S" ]; then
+                    pword1="${pword2}"
+                    break
+                fi
+            done
+            echo
+        else
+            echo "Detected matching passwords, setting root password now."
+            local query="ALTER USER 'root'@'localhost' IDENTIFIED BY '${pword1}'"
+            mysql -uroot -e "${query}"
+        fi
+    done
 }
 
 install_mariadb()
@@ -48,7 +107,6 @@ install_git()
     apt-get install -y git
 }
 
-
 if ! is_root; then 
     echo "You must be root to run this script."
 else
@@ -61,6 +119,7 @@ else
     
     if ! which mysql; then
         install_mariadb
+        set_mariadb_root_password
     fi
 
     if ! which php; then

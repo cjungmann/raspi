@@ -5,6 +5,26 @@ is_root() { [ "$USER" == "root" ]; }
 if is_root; then
     apt-get update
     apt-get install -y git emacs-nox texinfo
+
+    ./lamp_setup
+
+    # Preprequisite for building SchemaServer
+    apt-get install -y libfcgi-dev
+    # Prerequisite for packaging the framework
+    apt-get install -y uglifyjs
+
+    declare OPWD="${PWD}"
+    cd /home/pi
+    mkdir www src
+    cd src
+    git clone https://github.com/cjungmann/SchemaServer.git
+    git clone https://github.com/cjungmann/schemafw.git
+
+    chown -R pi:pi SchemaServer
+    chown -R pi:pi schemafw
+
+
+    cd "${OPWD}"
 else
     echo "You must be root to run this script (use \"sudo\")."
 fi

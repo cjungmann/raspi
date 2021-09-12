@@ -2,6 +2,16 @@
 
 is_root() { [ "$USER" == "root" ]; }
 
+download_build_install_valgrind()
+{
+    wget https://sourceware.org/pub/valgrind/valgrind-3.17.0.tar.bz2
+    tar -xf valgrind-3.27.0.tar.bz2
+    cd valgrind-3.27.0
+    ./configure
+    make
+    make install
+}
+
 if is_root; then
     apt-get update
     apt-get install -y git emacs-nox texinfo
@@ -12,6 +22,8 @@ if is_root; then
     apt-get install -y libfcgi-dev
     # Prerequisite for packaging the framework
     apt-get install -y uglifyjs
+
+    download_build_install_valgrind
 
     declare OPWD="${PWD}"
     cd /home/pi

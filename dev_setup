@@ -9,7 +9,9 @@ download_build_install_valgrind()
     cd valgrind-3.27.0
     ./configure
     make
+    chown pi:pi -R ../../valgrind-3.27.0
     make install
+    cd ..
 }
 
 if is_root; then
@@ -23,17 +25,20 @@ if is_root; then
     # Prerequisite for packaging the framework
     apt-get install -y uglifyjs
 
-    download_build_install_valgrind
-
     declare OPWD="${PWD}"
     cd /home/pi
     mkdir www src
     cd src
+
+    download_build_install_valgrind
+
     git clone https://github.com/cjungmann/SchemaServer.git
     git clone https://github.com/cjungmann/schemafw.git
 
-    chown -R pi:pi SchemaServer
-    chown -R pi:pi schemafw
+    cd ..
+
+    chown -R pi:pi src
+    chown -R pi:pi www
 
 
     cd "${OPWD}"

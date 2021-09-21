@@ -83,6 +83,26 @@ install_mariadb()
     echo "${C_GREEN}You may want to create a default user in .my.cnf.[m"
 }
 
+install_www-data()
+{
+    echo "Creating www-data user without a password."
+
+    sudo mysql -e "CREATE USER 'www-data'@'localhost'";
+
+    echo "Adding privileges to www-data."
+    local -a PRIVS=(
+        CREATE
+        DELETE
+        INSERT
+        SELECT
+        UPDATE
+        DROP
+        )
+
+    IFS=','
+    sudo mysql -e "GRANT ${PRIVS[@]} ON *.* TO 'www-data'@'localhost'"
+    }
+
 install_php()
 {
     echo "${C_GREEN}Installing php[m"
@@ -119,6 +139,7 @@ else
     
     if ! which mysql; then
         install_mariadb
+        install_www-data
         set_mariadb_root_password
     fi
 

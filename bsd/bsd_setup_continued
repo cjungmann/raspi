@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+is_root() { [ "$USER" == "root" ]; }
+
+declare DONE="[32;1m"   ## set foregound to green
+declare FAIL="[31;1m"   ## set foreground to red
+declare COFF="[m"       ## return to default foreground color
+
+declare SUSER=
+declare SPASS=
+
+
+export ASSUME_ALWAYS_YES=yes;
+
+get_user_and_password()
+{
+    local -n suser="SUSER"
+    local -n spass="SPASS"
+    local spass1
+
+    echo -n "Enter a new sudo (group 'wheel') user: "
+    read suser
+    echo
+    while true; do
+        echo -n "Enter a password for '${suser}': "
+        read -s spass1
+        if [ $? -ne 0 ]; then
+            echo
+        else
+            echo
+            echo -n "Reenter the password: "
+            read -s spass
+            if [ $? -eq 0 ]; then
+                if [ "$spass" == "$spass1" ]; then
+                    echo
+                    return 0
+                else
+                    spass=
+                    spass1=
+                    echo
+                    echo "Password mismatch: try again."
+                fi
+            fi
+        fi
+    done
+
+    return 1
+}
+
+update_sudoers()
+{
+    pkg -y install sudo
+    if [ $? -eq 0 ]; then
+        local iline=$'\n'"${SUSER} ALL=(ALL) ALL"$'\n'
+        local -a args=(
+            -e '/ROOT ALL=(ALL) ALL/a\'"${iline}"
+            -e 's/$%wheel ALL=(ALL) ALL/wheel ALL=(ALL) ALL/'
+            )
+        
+        sudo sed "${args[@]}" /usr/local/etc/sudoers
+    fi
+}
+
+add_sudo_user()
+{
+    echo "${SPASS}" | pw add user"${SUSER}" -h 0
+    if [ $? -eq 0 ]; then
+        echo "Did it"
+    else
+        echo "Failed to add user."
+    fi
+}
+
+
+
+
+
+
+##################
+#      Main      #
+##################
+
+if get_user_and_password; then
+    update_sudoers
+fi

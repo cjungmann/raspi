@@ -1,12 +1,32 @@
 #!/bin/sh
 
+is_root() { [ "$USER" == "root" ]; }
+
+declare DONE="[32;1m"   ## set foregound to green
+declare FAIL="[31;1m"   ## set foreground to red
+declare COFF="[m"       ## return to default foreground color
+
+declare SUSER=
+declare SPASS=
+
+
 export ASSUME_ALWAYS_YES=yes;
 
-pkg bootstrap
+##################
+#      Main      #
+##################
 
-if ! which bash; then
-   pkg install bash
+echo "BASH is better for some scripting stuff (IMHO), so"
+echo "this script installs BASH then runs another script that"
+echo "uses BASH features for a more interactive script."
+
+if is_root; then
+    pkg bootstrap
+    if ! which bash 2>/dev/null; then
+        pkg install bash
+    fi
+    ./bsd_setup_continued
+else
+    echo "Please run this script as root. Either sign in"
+    echo "as root, or use `sudo` to run this script."
 fi
-
-./bsd_setup_bash
-

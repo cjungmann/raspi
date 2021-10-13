@@ -49,16 +49,17 @@ get_user_and_password()
 
 update_sudoers()
 {
-    pkg -y install sudo
-    if [ $? -eq 0 ]; then
-        local iline=$'\n'"${SUSER} ALL=(ALL) ALL"$'\n'
-        local -a args=(
-            -e '/ROOT ALL=(ALL) ALL/a\'"${iline}"
-            -e 's/$%wheel ALL=(ALL) ALL/wheel ALL=(ALL) ALL/'
-            )
-        
-        sudo sed "${args[@]}" /usr/local/etc/sudoers
+    if ! which sudo 2>/dev/null; then
+        pkg -y install sudo
     fi
+
+    local iline=$'\n'"${SUSER} ALL=(ALL) ALL"$'\n'
+    local -a args=(
+        -e '/ROOT ALL=(ALL) ALL/a\'"${iline}"
+        -e 's/$# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/'
+    )
+    
+    sudo sed "${args[@]}" /usr/local/etc/sudoers
 }
 
 add_sudo_user()

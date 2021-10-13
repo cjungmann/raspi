@@ -6,27 +6,37 @@ declare DONE="[32;1m"   ## set foregound to green
 declare FAIL="[31;1m"   ## set foreground to red
 declare COFF="[m"       ## return to default foreground color
 
-declare SUSER=
-declare SPASS=
-
-
 export ASSUME_ALWAYS_YES=yes;
 
 ##################
 #      Main      #
 ##################
 
+if ! is_root; then
+    echo "You must be root to run this script."
+    exit 1
+fi
+
 echo "BASH is better for some scripting stuff (IMHO), so"
 echo "this script installs BASH then runs another script that"
 echo "uses BASH features for a more interactive script."
+echo
+echo "We start with getting a username and password for"
+echo "a sudo user, then the rest should run unattended."
+echo
 
-if is_root; then
+
+if type pkg 2>1 1>/dev/null; then
     pkg bootstrap
-    if ! which bash 2>/dev/null; then
+    if ! type bash 2>1 1>/dev/null; then
         pkg install bash
+        if [ $? -ne 0 ]; then
+            echo "Failed to install bash.  Can't proceed, aborting."
+            exit 1
+        fi
     fi
-    ./bsd_setup_continued
+
+    bash ./bsd_setup_continued
 else
-    echo "Please run this script as root. Either sign in"
-    echo "as root, or use `sudo` to run this script."
+    echo "Can't find 'pkg' package manager, suspect non-BSD system.  Aborting."
 fi

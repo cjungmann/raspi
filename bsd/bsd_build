@@ -83,6 +83,7 @@ copy_image()
 declare -a script_list=(
     bsd_setup
     bsd_setup_continued
+    bsd_setup_dev_stack
 )
 
 copy_scripts()
@@ -92,9 +93,9 @@ copy_scripts()
     if [ $? -eq 0 ]; then
         mount "/dev/${TARGET}1" msdosboot
         if [ $? -eq 0 ]; then
-            mkdir  msdosboot/bsd_setup
+            mkdir  msdosboot/bsd_setup.d
             if [ $? -eq 0 ]; then
-                cp "${script_list[@]}" msdosboot/bsd_setup
+                cp "${script_list[@]}" msdosboot/bsd_setup.d
                 if [ $? -eq 0 ]; then
                     copied="${#script_list[@]}"
                     echo "Scripts successfully copied"

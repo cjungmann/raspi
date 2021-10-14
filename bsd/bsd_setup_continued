@@ -4,21 +4,39 @@ is_root() { [ "$USER" == "root" ]; }
 
 declare DONE="[32;1m"   ## set foregound to green
 declare FAIL="[31;1m"   ## set foreground to red
+declare NONEED="[34;1m" ## set blue foreground
 declare COFF="[m"       ## return to default foreground color
 
 declare SUSER=
 declare SPASS=
 
-
 export ASSUME_ALWAYS_YES=yes;
 
-get_user_and_password()
+get_yes_no()
 {
-    local -n suser="SUSER"
-    local -n spass="SPASS"
-    local spass1
+    local keyp
+    while true; do
+        read -n1 -p"[Y]es or [N]o: " keyp
+        if [ $? -eq 0 ]; then
+            if [ "${keyp^^}" == "Y" ]; then
+                echo
+                return 0
+            elif [ "${keyp^^}" == "N" ]; then
+                echo
+                return 1
+            else
+                echo -n "[2K[1G"  # erase line; move to leftmost (1) column
+            fi
+        fi
+    done
+}
 
-    echo -n "Enter a new sudo (group 'wheel') user: "
+get_name_and_password()
+{
+    local -n suser=SUSER
+    local -n spass=SPASS
+
+    echo -n "Enter a new sudo user: "
     read suser
     echo
     while true; do
@@ -47,40 +65,72 @@ get_user_and_password()
     return 1
 }
 
-update_sudoers()
+check_sudoers()
 {
-    if ! which sudo 2>/dev/null; then
-        pkg -y install sudo
+    local user="$1"
+    local -i found=1
+    grep -qs "${user}" /usr/local/etc/sudoers
+    found=$?
+    if [ $found -ne 0 ]; then
+        grep -qs "${user}" /usr/local/etc/sudoers.d/*
+        found=$?
     fi
 
-    local iline=$'\n'"${SUSER} ALL=(ALL) ALL"$'\n'
-    local -a args=(
-        -e '/ROOT ALL=(ALL) ALL/a\'"${iline}"
-        -e 's/$# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/'
-    )
-    
-    sudo sed "${args[@]}" /usr/local/etc/sudoers
+    return $found
+}
+
+update_sudoers()
+{
+    local user="$1"
+
+    if ! which sudo 2>/dev/null; then
+        pkg -y install sudo
+        if [ $? -eq 0 ]; then
+            echo "${DONE}Sudo installed.${COFF}"
+        else
+            echo "${FAIL}Sudo not installed.${COFF}"
+            exit 1
+        fi
+    fi
+
+    if ! check_sudoers "${user}"; then
+        echo "${user} ALL=(ALL) ALL" > /usr/local/etc/sudoers.d/"${user}"
+        echo "${DONE}Added '${user}' as sudo user.${COFF}"
+        service sudo restart
+        if [ $? -eq 0 ]; then
+            echo "${DONE}Restarted sudo.${COFF}"
+        else
+            echo "${FAIL}Failed to restart sudo.${COFF}"
+        fi
+    fi
 }
 
 add_sudo_user()
 {
-    echo "${SPASS}" | pw add user"${SUSER}" -h 0
+    local user="$1"
+    local pword="$2"
+    echo "${pword}" | pw add user "${user}" -m -h 0
     if [ $? -eq 0 ]; then
-        echo "Did it"
+        echo "${DONE}Added user ${user} to this system.${COFF}"
+        update_sudoers "${user}"
     else
-        echo "Failed to add user."
+        echo "${FAIL}Failed to add user ${user}.${COFF}"
     fi
 }
-
-
-
-
 
 
 ##################
 #      Main      #
 ##################
 
-if get_user_and_password; then
-    update_sudoers
+echo "Create a sudo user right now?"
+if get_yes_no; then
+    if is_root; then
+        if get_name_and_password; then
+            add_sudo_user "${SUSER}" "${SPASS}"
+        fi
+    else
+        echo "You must be root to run this script."
+        exit 1
+    fi
 fi

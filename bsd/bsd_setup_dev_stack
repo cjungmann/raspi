@@ -1,8 +1,93 @@
 #!/usr/bin/env bash
 
-source "bsd_setup_utils"
+# source "bsd_setup_utils"
+
+is_root() { [ "$USER" == "root" ]; }
+
+declare DONE="[32;1m"   ## set green foregound
+declare FAIL="[31;1m"   ## set red foreground
+declare NONEED="[34;1m" ## set blue foreground
+declare COFF="[m"       ## return to default foreground color
 
 export ASSUME_ALWAYS_YES=yes;
+
+declare -a LOAD_RESULTS=()
+declare LOADER
+
+is_command_installed() { type "$1" 2>1 1>/dev/null; }
+
+set_loader()
+{
+    local -n loader="LOADER"
+    if is_command_installed pkg; then
+        loader=( pkg install )
+    elif is_command_install apt; then
+        loader=( apt-get install) 
+    elif is_command_install pacman; then
+        loader=( pacman -S )
+    else
+        echo "Unknown installer, terminating program."
+        exit 1
+    fi
+}
+
+load_app()
+{
+    if ! [ "$LOADER" ]; then
+        echo "App loader not defined, terminating program."
+        exit 1
+    fi
+
+    local -i exit_code=1
+    local target="$1"
+    local apptest="${2:-$target}"
+    local -n results=LOAD_RESULTS
+    local result_string
+
+    if is_command_installed "$apptest"; then
+        result_string="${NONEED}$target is already installed.${COFF}"
+    else
+        "${LOADER[@]}" "$target"
+        if [ $? -eq 0 ]; then
+            result_string="${DONE}$target successfully installed.${COFF}"
+            exit_code=0
+        else
+            result_string="${FAIL}Failed to install '$target'.${COFF}"
+        fi
+    fi
+
+    results+=( "$result_string" )
+    return $exit_code
+}
+
+setup_apache24()
+{
+    local -n results=LOAD_RESULTS
+    local result_string
+
+    grep apache24_enable /etc/rc.conf
+    if [ $? -ne 0 ]; then
+        echo "apache24_enable=\"YES\"" >> /etc/rc.conf
+        result_string="  ${DONE}enabled apache24.${COFF}"
+    else
+        result_string="  ${FAIL}Failed to enable apache24.${COFF}"
+    fi
+
+    results+=( "$result_string" )
+}
+
+display_status_report()
+{
+    echo
+    echo "#======================================#"
+    echo "# Dev Stack Installation Status Report #"
+    echo "#======================================#"
+
+    local line
+    for line in "${LOAD_RESULTS[@]}"; do
+        echo "$line"
+    done
+}
 
 load_valgrind()
 {
@@ -52,17 +137,35 @@ load_emacs_info()
     fi
 }
 
+npm_load()
+{
+    npm install "$1" -g
+}
+
 if is_root; then
+    set_loader
+
     load_app git
     load_app wget
-    load_app emacs-nox
-    load_app texinfo
+    load_app emacs-nox           emacs
+    load_app texinfo             makeinfo
+    load_app apache24            httpd
+    if  [ $? -eq 0 ]; then
+        setup_apache24
+    fi
+    load_app mariadb105-server   mariadb
+    load_app mariadb105-client   mariadb
+    load_app php80               php
+    # load_app npm         # for uglifyjs
+    # npm_load uglify-js
 
-    load_app locate
-    /usr/libexec/locate.updatedb
+    # load_app locate
+    # /usr/libexec/locate.updatedb
 
-    load_valgrind
-    load_emacs_info
+    # load_valgrind
+    # load_emacs_info
+
+    display_status_report
 else
     echo "You must be root to install programs."
 fi

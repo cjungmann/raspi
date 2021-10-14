@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+
+declare TARGET
+
+is_root() { [ "$USER" == "root" ]; }
+
+umount_wait()
+{
+    local target="$1"
+    local -i count=0
+    while true; do
+        if umount "$target"; then
+            return 0
+        fi
+
+        if [ $(( ++count )) -gt 5 ]; then
+            return 1
+        fi
+
+        sleep 1
+    done
+}
+
+un_mount()
+{
+    local target="$1"
+    local IFS=$'\n'
+    local -a lines=( $( mount | grep "$target" ) )
+    local line
+    local -a mounting
+
+    local mpath mmount
+
+    IFS=$' '
+    for line in "${lines[@]}"; do
+        mounting=( $line )
+        mpath="${mounting[0]}"
+        mmount="${mounting[2]}"
+        echo "Unmounting [32;1m${mpath}[m at mount point [32;1m${mmount}[m"
+        umount_wait "${mmount}"
+    done
+}
+
+copy_image()
+{
+    local path_img="$1"
+    local -a args=(
+        bs=10M
+        if="${path_img}"
+        of="/dev/${TARGET}"
+        status=progress
+        conv=fsync
+    )
+
+    if is_root; then
+        echo "Unmounting partitions, if necessary"
+        un_mount "${TARGET}"
+        
+        echo "Wiping existing contents of SD card"
+        wipefs -a "/dev/${TARGET}"
+        if [ $? -eq 0 ];then
+
+            echo "Calling dd using arguments: [32;1m${args[*]}[m"
+            dd "${args[@]}"
+            if [ $? -eq 0 ]; then
+                sync
+                echo "Successfully copied the image to the sd card."
+                return 0
+            else
+                echo "Unexpected failure loading image to the sd card."
+            fi
+        else
+            echo "wipefs failed, operation aborted."
+        fi
+
+    else
+        echo "Failed to copy image: must be root."
+    fi
+
+    return 1
+}
+
+declare -a script_list=(
+    bsd_setup
+    bsd_setup_continued
+)
+
+copy_scripts()
+{
+    local -i copied=0
+    mkdir msdosboot
+    if [ $? -eq 0 ]; then
+        mount "/dev/${TARGET}1" msdosboot
+        if [ $? -eq 0 ]; then
+            mkdir  msdosboot/bsd_setup
+            if [ $? -eq 0 ]; then
+                cp "${script_list[@]}" msdosboot/bsd_setup
+                if [ $? -eq 0 ]; then
+                    copied="${#script_list[@]}"
+                    echo "Scripts successfully copied"
+                else
+                    echo "Failed to copy files."
+                fi
+            else
+                echo "Failed to create bsd_setup subdirectory."
+            fi
+
+            umount_wait msdosboot
+            echo "msdosboot unmounted."
+        else
+            echo "Failed to mount msdosboot."
+        fi
+
+        rm -r msdosboot
+    else
+        echo "Failed to create msdosboot directory."
+    fi
+}
+
+TARGET="$1"
+IFS=$'\n'
+IMAGES=( $( ls -1 *.img ) )
+copy_image "${IMAGES[-1]}"
+if [ $? -eq 0 ]; then
+    copy_scripts
+fi    

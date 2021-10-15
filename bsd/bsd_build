@@ -81,6 +81,7 @@ copy_image()
 }
 
 declare -a script_list=(
+    bsd_setup_common
     bsd_setup
     bsd_setup_continued
     bsd_setup_dev_stack

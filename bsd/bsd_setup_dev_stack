@@ -1,15 +1,31 @@
 #!/usr/bin/env bash
 
-# source "bsd_setup_utils"
+source "bsd_setup_common"
 
-is_root() { [ "$USER" == "root" ]; }
-
-declare DONE="[32;1m"   ## set green foregound
-declare FAIL="[31;1m"   ## set red foreground
-declare NONEED="[34;1m" ## set blue foreground
-declare COFF="[m"       ## return to default foreground color
-
-export ASSUME_ALWAYS_YES=yes;
+# Each line below describes a package to install.  Comment-out
+# undesirable packages to prevent them being installed.
+#
+# Where a line includes '#' characters, the '#' separates the
+# line into multipe values.  The first value is the name by
+# which the package is installed.  For packages whose executable
+# name doesn't match the package name, the second value is a
+# name by which the script can test if the package is already
+# installed (in case this script is run more than once).  The
+# third value, if included, is the name of a function, called
+# upon success installing the package, to continue setting up
+# the package.
+declare -a DEV_STACK=(
+    git
+    wget
+    emacs-nox&emacs
+    texinfo&makeinfo
+    apache24&httpd&setup_apache24
+    mariadb105-server&mariadb
+    php80&php
+    npm
+    &uglifyjs&setup_uglify
+    
+)
 
 declare -a LOAD_RESULTS=()
 declare LOADER
@@ -41,6 +57,7 @@ load_app()
     local -i exit_code=1
     local target="$1"
     local apptest="${2:-$target}"
+    local followup="$3"
     local -n results=LOAD_RESULTS
     local result_string
 
@@ -50,6 +67,9 @@ load_app()
         "${LOADER[@]}" "$target"
         if [ $? -eq 0 ]; then
             result_string="${DONE}$target successfully installed.${COFF}"
+            if [ "$followup" ]; then
+                "$followup"
+            fi
             exit_code=0
         else
             result_string="${FAIL}Failed to install '$target'.${COFF}"
@@ -68,12 +88,26 @@ setup_apache24()
     grep apache24_enable /etc/rc.conf
     if [ $? -ne 0 ]; then
         echo "apache24_enable=\"YES\"" >> /etc/rc.conf
+        service apache24 start
         result_string="  ${DONE}enabled apache24.${COFF}"
     else
         result_string="  ${FAIL}Failed to enable apache24.${COFF}"
     fi
 
     results+=( "$result_string" )
+}
+
+setup_uglify()
+{
+    local owd="$PWD"
+    local user="${SUDO_USER:-USER}"
+    local path="/home/${user}/src"
+    mkdir -p "$path"
+    cd "$path"
+    git clone https://github.com/mishoo/UglifyJS
+    cd UglifyJS
+    npm link .
+    cd "$owd"
 }
 
 display_status_report()
@@ -87,22 +121,6 @@ display_status_report()
     for line in "${LOAD_RESULTS[@]}"; do
         echo "$line"
     done
-}
-
-load_valgrind()
-{
-    if ! which valgrind; then
-        local OPWD="$PWD"
-        cd /tmp
-        git clone https://github.com/paulfloyd/freebsd_valgrind.git
-        cd freebsd_valgrind
-        sh autogen.sh
-        gmake
-        gmake install
-        cd ..
-        rm -rf freebsd_valgrind
-        cd "$OPWD"
-    fi
 }
 
 load_emacs_info()
@@ -142,32 +160,54 @@ npm_load()
     npm install "$1" -g
 }
 
-if is_root; then
-    set_loader
+dev_stack_warn()
+{
+    local IFS=$'&'
+    local -a aline
+    for line in "${DEV_STACK[@]}"; do
+        aline=( $line )
+        echo "Installing ${aline[0]}"
+    done
+}
 
-    load_app git
-    load_app wget
-    load_app emacs-nox           emacs
-    load_app texinfo             makeinfo
-    load_app apache24            httpd
-    if  [ $? -eq 0 ]; then
-        setup_apache24
+dev_stack_install()
+{
+    local IFS=$'&'
+    local -a aline
+    for line in "${DEV_STACK[@]}"; do
+        aline=( $line )
+        load_app "${aline[@]}"
+    done
+}
+
+echo "This script will install several packages in the goal"
+echo "of initializing a newly-installed OS to be a productive"
+echo "web server.  You will see a list of applications to be"
+echo "installed, then an opportunity to scrap installation while"
+echo "you remove some items by editing this script."
+echo
+echo "Near the top of this script is an array that defines which"
+echo "packages will be installed.  Comment-out packages that you"
+echo "wish to omit.  Instructions can be found near the array."
+echo
+
+dev_stack_warn
+
+echo "Continue with installing the above packages,"
+if get_yes_no; then
+    if is_root; then
+        set_loader
+
+        dev_stack_install
+
+        # # load_app npm         # for uglifyjs
+        # # npm_load uglify-js
+        # # load_emacs_info
+
+        display_status_report
+    else
+        echo "You must be root to install programs."
     fi
-    load_app mariadb105-server   mariadb
-    load_app mariadb105-client   mariadb
-    load_app php80               php
-    # load_app npm         # for uglifyjs
-    # npm_load uglify-js
-
-    # load_app locate
-    # /usr/libexec/locate.updatedb
-
-    # load_valgrind
-    # load_emacs_info
-
-    display_status_report
-else
-    echo "You must be root to install programs."
 fi
 
 

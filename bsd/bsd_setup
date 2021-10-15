@@ -1,11 +1,6 @@
 #!/bin/sh
 
 is_root() { [ "$USER" == "root" ]; }
-
-declare DONE="[32;1m"   ## set foregound to green
-declare FAIL="[31;1m"   ## set foreground to red
-declare COFF="[m"       ## return to default foreground color
-
 export ASSUME_ALWAYS_YES=yes;
 
 ##################

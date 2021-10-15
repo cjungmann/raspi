@@ -47,6 +47,7 @@ prepare_avahi_daemon_conf()
         echo "enable-wide-area" >> "$target"
     fi
 
+    log_message "updated avahi-daemon.conf"
     cd "$PrevWD"
 }
 
@@ -54,7 +55,9 @@ enable_hostname_ping()
 {
     echo "[34;1menable_hostname_ping()[m"
     pkg install -y nss_mdns
+    log_result $? "Installing nss_mdns."
     pkg install -y avahi-app
+    log_result $? "Installing avahi-app." 
 
     add_line_if_missing /etc/rc.conf avahi_daemon_enable="YES"
     add_line_if_missing /etc/rc.conf dbus_enable="YES"
@@ -63,8 +66,12 @@ enable_hostname_ping()
     prepare_nsswitch_conf
     prepare_avahi_daemon_conf
 
-    service dbus start
-    service avahi-daemon start
+    service dbus restart
+    log_result $? "Restarting dbus service."
+    service avahi-daemon restart
+    log_result $? "Restarting avahi-daemon service."
+    service avahi-dnsconfd restart
+    log_result $? "Restarting avahi-dnsconfd service."
 }
 
 
@@ -100,5 +107,5 @@ enable_hostname_ping       # prepare to recognize device using local DNS
 
 # uncomment to run automatically, otherwise you can
 # run it at your first login:
-# bsd_setup_dev_stack      
+./bsd_setup_dev_stack      
 

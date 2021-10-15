@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-is_root() { [ "$USER" == "root" ]; }
+source "bsd_setup_common"
 
 declare DONE="[32;1m"   ## set foregound to green
 declare FAIL="[31;1m"   ## set foreground to red
@@ -11,25 +11,6 @@ declare SUSER=
 declare SPASS=
 
 export ASSUME_ALWAYS_YES=yes;
-
-get_yes_no()
-{
-    local keyp
-    while true; do
-        read -n1 -p"[Y]es or [N]o: " keyp
-        if [ $? -eq 0 ]; then
-            if [ "${keyp^^}" == "Y" ]; then
-                echo
-                return 0
-            elif [ "${keyp^^}" == "N" ]; then
-                echo
-                return 1
-            else
-                echo -n "[2K[1G"  # erase line; move to leftmost (1) column
-            fi
-        fi
-    done
-}
 
 get_name_and_password()
 {

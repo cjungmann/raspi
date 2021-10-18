@@ -17,13 +17,13 @@ source "bsd_setup_common"
 declare -a DEV_STACK=(
     git
     wget
-    emacs-nox&emacs
-    texinfo&makeinfo
-    apache24&httpd&setup_apache24
-    mariadb105-server&mariadb
-    php80&php
+    emacs-nox^emacs
+    texinfo^makeinfo
+    apache24^httpd^setup_apache24
+    mariadb105-server^mariadb
+    php80^php
     npm
-    &uglifyjs&setup_uglify
+    ^uglifyjs^setup_uglify
     
 )
 
@@ -162,7 +162,7 @@ npm_load()
 
 dev_stack_warn()
 {
-    local IFS=$'&'
+    local IFS=$'^'
     local -a aline
     for line in "${DEV_STACK[@]}"; do
         aline=( $line )
@@ -172,7 +172,7 @@ dev_stack_warn()
 
 dev_stack_install()
 {
-    local IFS=$'&'
+    local IFS=$'^'
     local -a aline
     for line in "${DEV_STACK[@]}"; do
         aline=( $line )

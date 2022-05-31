@@ -30,7 +30,8 @@ if is_root; then
     mkdir www src
     cd src
 
-    download_build_install_valgrind
+    # valgrind is considered deficient, look-up and use -fsanitize=address
+    # download_build_install_valgrind
 
     git clone https://github.com/cjungmann/SchemaServer.git
     git clone https://github.com/cjungmann/schemafw.git

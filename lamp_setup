@@ -2,6 +2,36 @@
 
 declare C_GREEN="[32;1m"
 
+declare SUCCESS="[32;1m"   # green
+declare WARN="[33;1m"      # brown
+declare FAIL="[31;1m"       # red
+declare ANNOUNCE="[35;1m"  # magenta
+declare COFF="[m"          # cancel colors
+declare CRLF="MJ"
+
+
+declare REPORT=""
+
+report_announce()
+{
+    local -n report=REPORT
+    report="${report}${ANNOUNCE}Installing $1...${COFF}"
+}
+
+report_result()
+{
+    local -n report=REPORT
+    if [ "$1" -eq 0 ]; then
+        report="${report}${SUCCESS}done${COFF}${CRLF}"
+    else
+        report="${report}${FAIL}failed${COFF}${CRLF}"
+    fi
+}
+
+is_root() { [ "$USER" == "root" ]; }
+
+# Waits for and returns single keypress, even if it is    }
+
 is_root() { [ "$USER" == "root" ]; }
 
 # Waits for and returns single keypress, even if it is
@@ -32,12 +62,15 @@ get_keypress()
 
 install_apache()
 {
+    report_announce Apache
     echo "${C_GREEN}Installing apache[m"
     apt-get install -y apache2-bin
+    report_result $?
+        
     ufw allow in "Apache"
 }
 
-set_mariadb_root_password()
+set_db_root_password()
 {
     local pword1=1 pword2=2 respkey
     until [ "${pword1}" == "${pword2}" ]; do
@@ -50,7 +83,7 @@ set_mariadb_root_password()
         read -s pword2
         echo
 
-        if [ "${pword1}" ] && [ "${pword1}" != "${pword2}" ]; then
+        if [ "${#pword1}" -eq 0 ] || [ "${pword1}" != "${pword2}" ]; then
             echo "The passwords do not match."
             echo -n "Press ENTER to try again, \"S\" to skip setting the password."
             while [ 1 -eq 1 ]; do
@@ -71,16 +104,40 @@ set_mariadb_root_password()
     done
 }
 
-install_mariadb()
+install_mysql()
 {
-    echo "${C_GREEN}Installing maria db[m"
-    apt-get install -y mariadb-server libmariadb-dev
-    cp -s /usr/bin/mariadb_config /usr/bin/mysql_config
-    ln -s /usr/include/mariadb /usr/include/mysql
+    echo "${C_GREEN}Installing mysql[m"
+    local -a PKGS=(
+        mysql-server-5.7
+        mysql-server-core-5.7
+        mysql-client-5.7 
+        mysql-client-core-5.7
+    )
+    apt-get install -y "${PKGS[@]}"
 
     echo "${C_GREEN}Login with 'root' with 'sudo mysql -u root'[m"
     echo "${C_GREEN}You will have to create regular users.[m"
     echo "${C_GREEN}You may want to create a default user in .my.cnf.[m"
+}
+
+install_mariadb()
+{
+    echo "${C_GREEN}Installing maria db[m"
+
+    report_announce MariaDB
+    apt-get install -y mariadb-server libmariadb-dev
+    local -i result="$?"
+    report_result $result
+
+    if [ $result -eq 0 ]; then
+        cp -s /usr/bin/mariadb_config /usr/bin/mysql_config
+        ln -s /usr/include/mariadb /usr/include/mysql
+
+        echo "${C_GREEN}Login with 'root' with 'sudo mysql -u root'[m"
+        echo "${C_GREEN}You will have to create regular users.[m"
+        echo "${C_GREEN}You may want to create a default user in .my.cnf.[m"
+    fi
+
 }
 
 install_www-data()
@@ -96,6 +153,7 @@ install_www-data()
         INSERT
         SELECT
         UPDATE
+        EXECUTE
         DROP
         )
 
@@ -103,29 +161,66 @@ install_www-data()
     sudo mysql -e "GRANT ${PRIVS[@]} ON *.* TO 'www-data'@'localhost'"
     }
 
-install_php()
+install_php7_app()
 {
     echo "${C_GREEN}Installing php[m"
-    apt-get install -y php libapache2-mod-php php-mysql
+    report_announce "PHP7"
+    apt-get install -y php libapache2-mod-php php-mysql php-dom
+    report_result $?
 }
+
+install_php8_repos_and_app()
+{
+    local -i result
+    
+    echo "${C_GREEN}Installing php8.0[m"
+    report_announce "PHP8.0"
+    wget -q https://packages.sury.org/php/apt.gpg -O- | apt-key add -
+    if [ $? -eq 0 ]; then
+        echo "deb https://packages.sury.org/php/ buster main" > /etc/apt/sources.list.d/php.list
+        apt-get update
+        apt-get install -y php8.0 libapache2-mod-php php-mysql php8.0-xml
+        if [ $? -eq 0 ]; then
+            report_result 0
+            return 0
+        fi
+    fi
+
+    report_result 1
+}
+
+declare -f install_php
+install_php=install_php8_repos_and_app
 
 install_fastcgi()
 {
     echo "${C_GREEN}Installing FastCGI[m"
+    report_announce "libfcgi-dev"
     apt-get install -y libfcgi-dev
+    report_result $?
 }
 
 install_texinfo()
 {
     echo "${C_GREEN}Installing texinfo utilities, including makeinfo[m"
+    report_announce "texinfo"
     apt-get install -y texinfo
+    report_result $?
 }
 
 install_git()
 {
     echo "${C_GREEN}Installing git environment[m"
+    report_announce git
     apt-get install -y git
+    report_result $?
 }
+
+if [ $# -gt 0 ]; then
+    if [ "$1" == "php7" ]; then
+        install_php=install_php7_app
+    fi
+fi
 
 if ! is_root; then 
     echo "You must be root to run this script."
@@ -139,12 +234,13 @@ else
     
     if ! which mysql; then
         install_mariadb
+        # install_mysql
         install_www-data
-        set_mariadb_root_password
+        set_db_root_password
     fi
 
     if ! which php; then
-        install_php
+        $install_php
     fi
 
     if ! which makeinfo; then
@@ -154,5 +250,6 @@ else
     if ! which git; then
         install_git
     fi
-       
+
+    echo "${REPORT}"
 fi

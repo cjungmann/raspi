@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+ls#!/usr/bin/env bash
 
 declare ProgressTarget="$1"
 
@@ -126,7 +126,7 @@ declare -a AppsArr=(
 
 if is_root; then
 
-    local HOME=/home/pi
+    declare HOME=/home/pi
 
     $NECHO "About to update software sources."
     apt-get update

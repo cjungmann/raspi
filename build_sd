@@ -258,6 +258,7 @@ prepare_firstboot()
 
 set_us_keyboard()
 {
+    echo $'\e[35;1m'"Configuring US-layout keyboard."$'\e[m'
     sed -E -i 's/KBLAYOUT="[[:alnum:]]{2}"/KBLAYOUT="us"/' "$RASPI_ROOT/etc/default/keyboard"
 }
 
@@ -275,6 +276,7 @@ perform_custom_settings()
 
 configure_root_partition()
 {
+    echo $'\e[35;1m'"In configure_root_partition."$'\e[m'
     local target=mpoint/etc/init.d
     if is_root; then
 
@@ -408,7 +410,8 @@ if confirm_Target; then
         copy_image "$image"
 
         if [ $? -eq 0 ]; then
-            configure_sd_card
+            # configure_sd_card   # minimal install
+            configure_sd_card_long   # more complete configuration
         fi
         un_mount
     fi

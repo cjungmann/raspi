@@ -96,11 +96,12 @@ confirm_Target()
         exit 1
     fi
 
-    echo "Attempting to confirm \"/dev/$Target\""
+    echo -n "Attempting to confirm \"/dev/$Target\": "
     if [ -b "/dev/$Target" ]; then
+        echo "target confirmed"
         return 0
     else
-        echo "The directory, $Target, is not available"
+        echo "the directory, $Target, is not available"
         return 1;
     fi
 }
@@ -113,11 +114,13 @@ get_image_filename()
 
     lines=( $( ls | grep \.img - ) )
     if [ $? -eq 0 ] && [ "${#lines[@]}" -gt 0 ]; then
+        # Select the last image found in alphabetical list:
         ndx="$(( ${#lines[@]} -1 ))"
+
+        # Echo image filename as return value to subprocess
         echo "${lines[$ndx]}"
+
         return 0
-    else
-        echo "Failed to find image candidates."
     fi
 
     return 1
@@ -407,6 +410,7 @@ if confirm_Target; then
 
     image=$( get_image_filename )
     if [ $? -eq 0 ]; then
+        echo "Using image '$image'"
         copy_image "$image"
 
         if [ $? -eq 0 ]; then
@@ -414,6 +418,11 @@ if confirm_Target; then
             configure_sd_card_long   # more complete configuration
         fi
         un_mount
+    else
+        echo
+        echo "Failed to get image filename"
+        echo "Download RaspberryPi OS image from https://www.raspberrypi.com/software/operating-systems"
+        echo "Unpack compressed file: xz -d -v <image.tar.xz>"
     fi
 else
     echo "Suspicious target"

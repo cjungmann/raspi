@@ -19,3 +19,15 @@ the library and be able to access it using SSH.  For that
 purpose, it may be helpful to change the hostname to a more
 distinctive name to avoid confusion.
 
+## INSTALLING AVAHI
+
+~~~sh
+sudo apt install avahi-daemon
+~~~
+
+You can set the string used for pinging Avahi in:
+- **/etc/avahi/avahi-daemon.conf**
+  Set the **host-name** parameter in the [SERVER] section.
+
+- **/etc/avahi/hosts**
+  Just put the desired name (or names) in the **hosts** file.

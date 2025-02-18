@@ -414,8 +414,8 @@ if confirm_Target; then
         copy_image "$image"
 
         if [ $? -eq 0 ]; then
-            # configure_sd_card   # minimal install
-            configure_sd_card_long   # more complete configuration
+            configure_sd_card   # minimal install
+            # configure_sd_card_long   # more complete configuration
         fi
         un_mount
     else
